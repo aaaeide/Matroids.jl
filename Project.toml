@@ -1,0 +1,4 @@
+name = "Matroids"
+uuid = "07c7cf73-e857-4996-9cc3-53a5ca3c53a0"
+authors = ["Andreas Aaberge Eide <ae@pilco.no>"]
+version = "0.1.0"

@@ -1,5 +1,3 @@
-using DataStructures
-
 Family{T} = Set{Set{T}}
 
 """
@@ -18,41 +16,43 @@ function knuth_matroid_construction(
 end
 
 """
-Generate the set F_{r+1} of all "covers" of the sets in F_r.
+Generate the set F_{r+1} of all "covers" of the sets in F_r, given the ground set of elements E.
 """
-function generate_covers(Fr::Family{<:Any}, E::Set{<:Any})::Family{<:Any}
+function generate_covers(Fr, E)::Family{<:Any}
   Set([A ∪ a for A ∈ Fr for a ∈ setdiff(E, A)])
 end
 
-# TODO: Make work with <:Any
-function enlarge(family::Family{<:Any}, to_add::Vector{Set{Int64}})::Family{<:Any}
+"""
+Enlarge a family by adding some additional sets of elements.
+"""
+function enlarge(family, to_add)::Family{<:Any}
   family ∪ to_add
 end
 
 """
-  If F_{r+1} contains any two sets A, B whose intersection A n B is not contained in C for any C in F_r, replace A and B in F_{r+1} by the single set A U B. Repeat this operation until A n B subseteq C for some C in F_r whenever A and B are distinct members of F_{r+1}.
-"""
-function superpose(f_cur::Family{<:Any}, f_old::Family{<:Any})::Family{<:Any}
-  f_new = Family{<:Any}()
-  stack = Stack{Set{<:Any}}()
-  for set ∈ f_cur
-    push!(stack, set)
-  end
+  If F_{r+1} contains any two sets A, B whose intersection A ∩ B is not contained in C for any C ∈ F_r, replace A, B ∈ F_{r+1} by the single set A ∪ B. Repeat this operation until A ∩ B ⊆ C for some C ∈ F_r whenever A and B are distinct members of F_{r+1}.
 
-  while !isempty(stack)
-    A, B = pop!(stack), pop!(stack)
-    for C ∈ f_old
-      if A ∩ B ∈ C
-        push!(f_new, A)
-        push!(f_new, B)
-        continue
+  f_cur and f_old should be Family: A Set of Sets of some type
+"""
+function superpose(f_cur, f_old)::Family{<:Any}
+  f_new = Set(f_cur)
+
+  for A ∈ f_new
+    for B ∈ f_new
+      should_merge = true
+      for C ∈ f_old
+        if A ∩ B ⊆ C
+          should_merge = false
+        end
+      end
+
+      if should_merge
+        setdiff!(f_new, [A, B])
+        push!(f_new, A ∪ B)
       end
     end
-
-    push!(stack, A ∪ B)
   end
 
   return f_new
 end
 
-export knuth_matroid_construction, generate_covers

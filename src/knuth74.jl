@@ -93,3 +93,33 @@ function superpose!(F, F_old)::Family{<:Any}
   return F
 end
 
+
+"""
+Find the bases of a matroid given an array F of its closed sets grouped by rank,  F = [F_0, F_1, ..., F_n], where n is the rank of the matroid.
+"""
+function bases(F)#::Family{<:Any}
+  rank = length(F) - 1 # Julia is 1-indexed, so F[1] = F_0
+  elements = pop!(F[length(F)])
+  min_closed_sets_of_2nd_highest_rank = 
+    [s for s in F[length(F) - 1] if length(s) == rank - 1]
+  bases = [union(s, e) 
+    for s in min_closed_sets_of_2nd_highest_rank
+    for e in elements
+  ]
+
+  bases = Set()
+  for s in min_closed_sets_of_2nd_highest_rank
+    for e in elements
+      b = union(s, e)
+      if length(b) == rank
+        push!(bases, b)
+      end
+    end
+  end
+
+  for b in sort!([join([string(x) for x in sort(collect(b))]) for b in bases])
+    println(b)
+  end
+
+  return bases
+end

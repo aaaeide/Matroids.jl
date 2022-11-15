@@ -3,3 +3,5 @@ uuid = "07c7cf73-e857-4996-9cc3-53a5ca3c53a0"
 authors = ["Andreas Aaberge Eide <ae@pilco.no>"]
 version = "0.1.0"
 
+[deps]
+IterTools = "c8e1da08-722c-5040-9ed9-7db0dc04731e"

@@ -33,7 +33,7 @@ end
 function knuth_matroid_construction(
   E,
   enlargements
-)
+)::Vector{Family}
   # Step 1: Initialize.
   r = 1
   F = [family([])]
@@ -102,10 +102,6 @@ function bases(F)#::Family{<:Any}
   elements = pop!(F[length(F)])
   min_closed_sets_of_2nd_highest_rank = 
     [s for s in F[length(F) - 1] if length(s) == rank - 1]
-  bases = [union(s, e) 
-    for s in min_closed_sets_of_2nd_highest_rank
-    for e in elements
-  ]
 
   bases = Set()
   for s in min_closed_sets_of_2nd_highest_rank

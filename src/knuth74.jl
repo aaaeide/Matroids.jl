@@ -1,4 +1,5 @@
 Family{T} = Set{Set{T}}
+KnuthMatroid{T} = Tuple{Set{T}, Vector{Family{T}}}
 
 
 """
@@ -9,7 +10,7 @@ function family(set_contents::Vector{Any})::Family{Any}
   Set([Set([])])
 end
 
-function family(set_contents::Vector{<:Any})::Family{<:Any}
+function family(set_contents)::Family{<:Any}
   Set([Set(e) for e in set_contents])
 end
 
@@ -33,7 +34,7 @@ end
 function knuth_matroid_construction(
   E,
   enlargements
-)::Vector{Family}
+)::KnuthMatroid{Any}
   # Step 1: Initialize.
   r = 1
   F = [family([])]
@@ -58,7 +59,7 @@ function knuth_matroid_construction(
     r += 1
   end
 
-  return F
+  return (E, F)
 end
 
 """

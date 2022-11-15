@@ -51,15 +51,14 @@ include("../src/knuth74.jl")
 
   @testset "knuth's matroid construction" begin
     # The example from Knuth (1974) section 3
-    elements = [0,1,2,3,4,5,6,7,8,9]
-    ground_set = Set(elements)
+    E = Set([0,1,2,3,4,5,6,7,8,9])
     enlargements = [nothing, family([
       [1,3,4], [1,5,9], [2,5,6], [3,5,8], [3,7,9], [2,3,8]]
     )]
 
     # The closed sets, grouped by rank
     F0 = family([])
-    F1 = family(elements) # The family of singleton sets
+    F1 = family(E) # The family of singleton sets
     F2 = family([
       [0,1], [0,2], [0,3], [0,4], [0,5], [0,6], [0,7], [0,8], [0,9], 
       [1,2], [1,3,4], [1,5,9], [1,6], [1,7], [1,8], 
@@ -82,10 +81,10 @@ include("../src/knuth74.jl")
       [0,8,9],
       [1,2,3,4,5,6,7,8,9]
     ])
-    F4 = family([elements]) # The family of only one set - E
+    F4 = family([E]) # The family of only one set - E
     F = [F0, F1, F2, F3, F4]
 
-    @test knuth_matroid_construction(ground_set, enlargements) == F
+    @test knuth_matroid_construction(E, enlargements) == (E, F)
 
     # Doesn't work
     # @testset "find bases" begin

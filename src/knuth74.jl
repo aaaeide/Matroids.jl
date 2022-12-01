@@ -95,28 +95,46 @@ function superpose!(F, F_old)::Family{<:Any}
 end
 
 
-"""
-Find the bases of a matroid given an array F of its closed sets grouped by rank,  F = [F_0, F_1, ..., F_n], where n is the rank of the matroid.
-"""
-function bases(F)#::Family{<:Any}
-  rank = length(F) - 1 # Julia is 1-indexed, so F[1] = F_0
-  elements = pop!(F[length(F)])
-  min_closed_sets_of_2nd_highest_rank = 
-    [s for s in F[length(F) - 1] if length(s) == rank - 1]
+function randomized_knuth_matroid_construction(n, p)::KnuthMatroid{Any}
+  E = Set([i for i in range(0,n-1)])
 
-  bases = Set()
-  for s in min_closed_sets_of_2nd_highest_rank
-    for e in elements
-      b = union(s, e)
-      if length(b) == rank
-        push!(bases, b)
-      end
+  # Step 1: Initialize.
+  r = 1
+  F = [family([])]
+  pr = 0
+
+  while true
+    # Step 2: Generate covers.
+    push!(F, generate_covers(F[r], E))
+
+    # Step 4: Superpose.
+    superpose!(F[r+1], F[r])
+
+    if r <= length(p)
+      pr = p[r]
     end
+
+    while pr > 0
+      # Random closed set in F_{r+1} and element in E ∖ A.
+      A = rand(F[r+1])
+      a = rand(setdiff(E, A))
+
+      # Replace A with A ∪ {a}.
+      F[r+1] = setdiff(F[r+1], A) ∪ Set([A ∪ a])
+
+      # Superpose again to account for coarsening step.
+      superpose!(F[r+1], F[r])
+
+      pr -= 1
+    end
+
+    # Step 5: Test for completion.
+    if E ∈ F[r+1]
+      break
+    end
+
+    r += 1
   end
 
-  for b in sort!([join([string(x) for x in sort(collect(b))]) for b in bases])
-    println(b)
-  end
-
-  return bases
+  return (E, F)
 end

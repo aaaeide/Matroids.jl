@@ -3,5 +3,5 @@
 	"build": {
 		"dockerfile": "Dockerfile"
 	},
-	"postCreateCommand": "/julia-devcontainer-scripts/postcreate.jl",
+	"postCreateCommand": "/julia-devcontainer-scripts/postcreate.jl"
 }

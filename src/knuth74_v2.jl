@@ -9,10 +9,10 @@ function subseteq(A, B)
 end
 
 function set_to_bits(set)
-  sum(2^x for x in set)
+  UInt16(sum(2^x for x in set))
 end
 
-function bits_to_set(bits)::Set{UInt16}
+function bits_to_set(bits)
   return Set([i-1 for i in 1:16 if reverse(bitstring(bits))[i] == '1'])
 end
 
@@ -41,29 +41,116 @@ function generate_covers_v2(F_r, n)
   Set([A | 1 << i for A ∈ F_r for i in 0:n-1 if A & 1 << i === 0])
 end
 
+function should_merge(A, B, F_prev)
+  for C in F_prev
+    # println("\n=====COMPARING=====")
+    # println("OUTER\t", bits_to_set(A), "\t", bitstring(UInt16(A)))
+    # println("MIDDLE\t", bits_to_set(B), "\t", bitstring(UInt16(B)))
+    # println("INNER\t", bits_to_set(C), "\t", bitstring(UInt16(C)))
+    
+    if subseteq(A & B, C)
+      # println("\nA ∩ B ⊆ C FOUND! NOT MERGING:")
+      # println("A:\t", bits_to_set(A), "\t", bitstring(UInt16(A)))
+      # println("B:\t", bits_to_set(B), "\t", bitstring(UInt16(B)))
+      # println("----------------------------------------")
+      # println("C:\t", bits_to_set(C), "\t", bitstring(UInt16(C)))
+      # println("========================================")
+      # readline()
+      return false
+    end
+
+  end
+  return true
+end
+
 function superpose_v2!(F, F_prev)
-  for A ∈ F
-    println("OUTER\t", bits_to_set(A))
-    for B ∈ F
-      println("MIDDLE\t", bits_to_set(B))
+  As = collect(F)
+  while length(As) !== 0
+    @label next_A
+    A = popfirst!(As)
 
-      should_merge = true
-      for C ∈ F_prev
-        println("INNER\t", bits_to_set(C))
-        if subseteq(A & B, C)
-          println("\nMATCH FOUND! NOT MERGING\n")
-          should_merge = false
-        end
-
-        readline()
-      end
-
-      if should_merge
+    for B in setdiff(F, A)
+      if should_merge(A, B, F_prev)
+        insert!(As, 1, A | B)
         setdiff!(F, [A, B])
         push!(F, A | B)
+
+        # println("\nA ∩ B ⊆ C NOT FOUND. MERGING ", bits_to_set(A), " AND ", bits_to_set(B))
+        # println("REMOVING A ", bits_to_set(A), " AND B ", bits_to_set(B))
+        # println("ADDING UNION ", bits_to_set(A | B))        
+        # println("A in F == ", A in F)
+        # println("B in F == ", B in F)        
+        # readline()
+        
+        @goto next_A
       end
     end
   end
 
   return F
 end
+
+
+# function superpose_v2!(F, F_prev)
+#   F_stk = sort!(collect(F), by = s -> length(bits_to_set(s)), rev = true)
+
+#   while length(F_stk) != 0
+#     A = popfirst!(F_stk)
+#     # println("POPPING A: ", bits_to_set(A))
+
+#     i = 1
+#     while i <= length(F_stk)
+#       B = F_stk[i]
+#       if B === A
+#         i += 1
+#         continue
+#       end
+
+#       if should_merge(A, B, F_prev)
+#         # Update stack.
+#         deleteat!(F_stk, i) # Removes B from the stack. A is already popped.
+#         if last(F_stk) != A | B
+#           push!(F_stk, A | B)
+#         end
+        
+#         # Update set.
+#         setdiff!(F, [A, B])
+#         push!(F, A | B)
+
+
+        
+#         # println("\nA ∩ B ⊆ C NOT FOUND. MERGING ", bits_to_set(A), " AND ", bits_to_set(B))
+#         # println("REMOVING A ", bits_to_set(A), " AND B ", bits_to_set(B))
+#         println("ADDING UNION ", bits_to_set(A | B))        
+#         # println("A in F == ", A in F_stk)
+#         # println("B in F == ", B in F_stk)        
+#         # readline()
+#       end
+      
+#       i+=1
+#     end
+#   end
+
+#   return F
+# # end
+
+# function superpose_v2!(F, F_prev)
+#   for A in F
+    
+#     for B in F
+#       should_merge = true
+#       for C in F_prev
+#         if A & B & C == A & B # A ∩ B ⊆ C
+#           should_merge = false
+#         end
+#       end
+
+#       if should_merge
+#         setdiff!(F, [A, B])
+#         push!(F, A | B)
+#       end
+#     end
+#   end
+  
+#   return F
+# end

@@ -16,13 +16,13 @@ function bits_to_set(bits)
   return Set([i-1 for i in 1:16 if reverse(bitstring(bits))[i] == '1'])
 end
 
-function knuth_matroid_construction_v2(n, enlargements)#::KnuthMatroid
+function knuth_matroid_construction_v2(n, enlargements)
   # Step 1: Initialize.
   r = 1 # Julia is 1-indexed, subtract 1 to get current rank
   F::Vector{Set{UInt16}} = [Set(0)] # Start with the empty set.
   while true
     # Step 2: Generate covers.
-    push!(F, generate_covers(F[r], n))
+    push!(F, generate_covers_v2(F[r], n))
 
     # Step 3: Enlarge.
     if r <= length(enlargements) && enlargements[r] !== nothing
@@ -30,8 +30,17 @@ function knuth_matroid_construction_v2(n, enlargements)#::KnuthMatroid
     end
 
     # Step 4: Superpose.
+    superpose_v2!(F[r+1], F[r])
 
+    # Step 5: Test for completion.
+    if 2^n-1 ∈ F[r+1]
+      break
+    end
+
+    r += 1
   end
+
+  return (n, F)
 end
 
 """

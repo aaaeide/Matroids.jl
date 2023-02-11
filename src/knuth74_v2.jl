@@ -8,6 +8,10 @@ function subseteq(A, B)
   A & B == A
 end
 
+function random_element(A)
+  rand([i-1 for i in 1:length(bitstring(A)) if reverse(bitstring(A))[i] === '1'])
+end
+
 function set_to_bits(set)
   UInt16(sum(2^x for x in set))
 end
@@ -163,3 +167,51 @@ end
   
 #   return F
 # end
+
+
+function randomized_knuth_matroid_construction_v2(n, p)
+  # Step 1: Initialize.
+  r = 1
+  F = [Set(0x0000)]
+  pr = 0
+  E = UInt16(2^n-1)
+
+  while true
+    # Step 2: Generate covers.
+    push!(F, generate_covers_v2(F[r], n))
+
+    # Step 4: Superpose
+    superpose_v2!(F[r+1], F[r])
+
+    # Step 5: Test for completion.
+    if E ∈ F[r+1]
+      return (n, F)
+    end
+
+    if r <= length(p)
+      pr = p[r]
+    end
+    
+    while pr > 0
+      # Get random closed set A in F_{r+1} and element a in E ∖ A.
+      A = rand(F[r+1])
+      a = random_element(diff(E, A))
+
+      # Replace A with A ∪ {a}.
+      F[r+1] = setdiff(F[r+1], A) ∪ Set([A | a])
+
+      # Superpose again to account for coarsening step.
+      superpose_v2!(F[r+1], F[r])
+      
+      # Step 5: Test for completion.
+      if E ∈ F[r+1]
+        return (n, F)
+      end
+      
+      pr -= 1
+    end
+
+
+    r += 1
+  end
+end

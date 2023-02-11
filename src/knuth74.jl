@@ -138,25 +138,3 @@ function randomized_knuth_matroid_construction(n, p)::KnuthMatroid{Any}
 
   return (E, F)
 end
-
-function avg(arr)
-  return sum(arr) / length(arr)
-end
-
-function benchmark(num, n, p)
-  times = []
-  bytes = []
-  gctimes = []
-  for _ in 1:num
-    res = @timed randomized_knuth_matroid_construction(n, p)
-    push!(times, res.time)
-    push!(bytes, res.bytes)
-    push!(gctimes, res.gctime)
-  end
-
-  t = round(avg(times), digits=7)
-  b = floor(Int, avg(bytes))
-  g = round(avg(gctimes), digits=7)
-
-  println("time\t$t\ngctime\t$g\nbytes\t$b")
-end

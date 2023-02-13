@@ -1,6 +1,6 @@
 using IterTools
 
-function rank_and_closure(M::KnuthMatroid, A)
+function rank_and_closure(M, A)
   E, F = M
   if A ⊈ E
     throw(ArgumentError("A is not a subset of E"))
@@ -15,17 +15,17 @@ function rank_and_closure(M::KnuthMatroid, A)
   end
 end
 
-function rank(M::KnuthMatroid, A)
+function rank(M, A)
   (r, _) = rank_and_closure(M, A)
   return r
 end
 
-function closure(M::KnuthMatroid, A)
+function closure(M, A)
   (_, cl) = rank_and_closure(M, A)
   return cl
 end
 
-function bases(M::KnuthMatroid)
+function bases(M)
   E, F = M
   r = rank(M, E)
 

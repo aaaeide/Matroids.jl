@@ -1,16 +1,16 @@
 using Test
 
 include("../src/properties.jl")
-include("../src/knuth74.jl")
+include("../src/kmc.jl")
 
-@testset "Properties of matroids produced by Knuth's algorithm" begin
+@testset "KMC v1: Bases, rank and closure" begin
   # The example from Knuth (1974) section 3
   E = Set([0,1,2,3,4,5,6,7,8,9])
   enlargements = [nothing, family([
     [1,3,4], [1,5,9], [2,5,6], [3,5,8], [3,7,9], [2,3,8]]
   )]
 
-  M = knuth_matroid_construction(E, enlargements)
+  M = knuth_matroid_construction_v1(E, enlargements)
 
   @test_throws ArgumentError closure(M, [-1, -2])
 

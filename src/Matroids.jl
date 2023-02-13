@@ -1,6 +1,6 @@
 module Matroids
 
-include("knuth74.jl")
+include("kmc.jl")
 include("properties.jl")
 
 end # module Matroids

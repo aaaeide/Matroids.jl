@@ -115,9 +115,10 @@ end
 """
 If F contains any two sets A, B whose intersection A ∩ B is not contained in C for any C ∈ F_prev, replace A, B ∈ F with the single set A ∪ B. Repeat this operation until A ∩ B ⊆ C for some C ∈ F_prev whenever A and B are distinct members of F.
 
-This accepts a list As, to experiment with different sortings of As.
+This implementation represents the sets using bits.
 """
-function do_bitwise_superpose!(As, F, F_prev)
+function bitwise_superpose!(F, F_prev)
+  As = collect(F)
   while length(As) !== 0
     A = popfirst!(As)
 
@@ -134,14 +135,22 @@ function do_bitwise_superpose!(As, F, F_prev)
   return F
 end
 
-function superpose_v2!(F, F_prev)
-  As = collect(F)
-  return do_bitwise_superpose!(As, F, F_prev)
-end
+function sorted_bitwise_superpose!(F, F_prev)
+  As = sort!(collect(F), by = s -> length(bits_to_set(s)))
+  while length(As) !== 0
+    A = popfirst!(As)
 
-function superpose_v3!(F, F_prev)
-  As = sort!(collect(F), by = s -> length(bits_to_set(s)), rev = true)
-  return do_bitwise_superpose!(As, F, F_prev)
+    for B in setdiff(F, A)
+      if should_merge(A, B, F_prev)
+        insert!(As, 1, A | B)
+        setdiff!(F, [A, B])
+        push!(F, A | B)
+        break
+      end
+    end
+  end
+
+  return F
 end
 
 ######################################
@@ -182,17 +191,16 @@ function knuth_matroid_construction_v1(
 end
 
 """
-Second implementation of Knuth's matroid construction (KMC) algorithm.
-
-In this version, the sets are represented using bits
+Knuth's matroid construction (KMC) algorithm. In this version, the sets are represented using bits.
 """
-function knuth_matroid_construction_v2(n, enlargements)
+function bitwise_kmc(generate_covers, superpose!, n, enlargements)
   # Step 1: Initialize.
   r = 1 # Julia is 1-indexed, subtract 1 to get current rank
   F = [Set(0)] # Start with the empty set.
+
   while true
     # Step 2: Generate covers.
-    push!(F, generate_covers_v2(F[r], n))
+    push!(F, generate_covers(F[r], n))
 
     # Step 3: Enlarge.
     if r <= length(enlargements) && enlargements[r] !== nothing
@@ -200,7 +208,7 @@ function knuth_matroid_construction_v2(n, enlargements)
     end
 
     # Step 4: Superpose.
-    superpose_v2!(F[r+1], F[r])
+    superpose!(F[r+1], F[r])
 
     # Step 5: Test for completion.
     if 2^n-1 ∈ F[r+1]
@@ -211,4 +219,12 @@ function knuth_matroid_construction_v2(n, enlargements)
   end
 
   return (n, F)
+end
+
+function knuth_matroid_construction_v2(n, enlargements)
+  return bitwise_kmc(generate_covers_v2, bitwise_superpose!, n, enlargements)
+end
+
+function knuth_matroid_construction_v3(n, enlargements)
+  return bitwise_kmc(generate_covers_v2, sorted_bitwise_superpose!, n, enlargements)
 end

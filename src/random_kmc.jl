@@ -114,12 +114,58 @@ end
 Second implementation of random-KMC. This uses the bit-based KMC methods.
 """
 function randomized_knuth_matroid_construction_v2(n, p)
-  return random_bitwise_kmc(generate_covers_v2, superpose_v2!, n, p)
+  return random_bitwise_kmc(generate_covers_v2, bitwise_superpose!, n, p)
 end
 
 """
 Third implementation of random-KMC. This sorts the sets by size before superposing.
 """
 function randomized_knuth_matroid_construction_v3(n, p)
-  return random_bitwise_kmc(generate_covers_v2, sorted_superpose_v2!, n, p)
+  return random_bitwise_kmc(generate_covers_v2, sorted_bitwise_superpose!, n, p)
+end
+
+"""
+Fourth implementation of random-KMC. This uses an iterative approach to superposition.
+"""
+function randomized_knuth_matroid_construction_v4(n, p)
+  r = 1
+  pr = 0
+  F = [Set(0)]
+  E = 2^n - 1 # The set of all elements in E.
+
+  while true
+    to_insert = collect(generate_covers_v2(F[r], n))
+
+    # Apply coarsening to covers.
+    if r <= length(p) && E ∉ to_insert # No need to coarsen if E is added.
+      pr = p[r]
+      while pr > 0
+        A = rand(to_insert)
+        a = random_element(E - A)
+        to_insert = setdiff(to_insert, A) ∪ [A | a]
+        pr -= 1
+      end
+    end
+
+    # Superpose.
+    push!(F, Set()) # Add F[r+1].
+    while length(to_insert) > 0
+      A = popfirst!(to_insert)
+      push!(F[r+1], A)
+
+      for B in setdiff(F[r+1], A)
+        if should_merge(A, B, F[r])
+          insert!(to_insert, 1, A | B)
+          setdiff!(F[r+1], [A, B])
+          push!(F[r+1], A | B)
+        end
+      end
+    end
+
+    if E ∈ F[r+1]
+      return (n, F)
+    end
+
+    r += 1
+  end
 end

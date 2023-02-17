@@ -38,15 +38,15 @@ function subseteq(A, B)
 end
 
 function random_element(A)
-  rand([i-1 for i in 1:length(bitstring(A)) if reverse(bitstring(A))[i] === '1'])
+  rand([i-1 for (i,c) in enumerate(reverse(bitstring(A))) if c == '1'])
 end
 
 function set_to_bits(set)
-  UInt16(sum(2^x for x in set))
+  sum(2^x for x in set)
 end
 
 function bits_to_set(bits)
-  return Set([i-1 for i in 1:16 if reverse(bitstring(bits))[i] == '1'])
+  Set(i-1 for (i, c) in enumerate(reverse(bitstring(bits))) if c == '1')
 end
 
 ###################
@@ -108,7 +108,6 @@ function should_merge(A, B, F_prev)
       return false
     end
   end
-
   return true
 end
 
@@ -198,7 +197,7 @@ function bitwise_kmc(generate_covers, superpose!, n, enlargements)
   r = 1 # Julia is 1-indexed, subtract 1 to get current rank
   F = [Set(0)] # Start with the empty set.
 
-  while true
+  while 2^n-1 ∉ F[r]
     # Step 2: Generate covers.
     push!(F, generate_covers(F[r], n))
 
@@ -209,12 +208,6 @@ function bitwise_kmc(generate_covers, superpose!, n, enlargements)
 
     # Step 4: Superpose.
     superpose!(F[r+1], F[r])
-
-    # Step 5: Test for completion.
-    if 2^n-1 ∈ F[r+1]
-      break
-    end
-
     r += 1
   end
 
@@ -227,4 +220,38 @@ end
 
 function knuth_matroid_construction_v3(n, enlargements)
   return bitwise_kmc(generate_covers_v2, sorted_bitwise_superpose!, n, enlargements)
+end
+
+"""
+This is an attempt at a smarter implementation than directly following the setup from Knuth's 1974 article, instead inspired by Knuth's ERECTION.W implementation, wherein the superpose step is replaced by an insert operation that inserts new closed sets into the family of current rank one at a time, superposing on the fly.
+"""
+function knuth_matroid_construction_v4(n, enlargements)
+  r = 1
+  F = [Set(0)]
+  
+  while 2^n-1 ∉ F[r]
+    to_insert = collect(generate_covers_v2(F[r], n))
+    if r <= length(enlargements) && enlargements[r] !== nothing
+      append!(to_insert, enlargements[r])
+    end
+
+    push!(F, Set())  # Add F[r+1]
+    while length(to_insert) > 0
+      A = popfirst!(to_insert)
+      push!(F[r+1], A)
+
+      for B in setdiff(F[r+1], A)
+        if should_merge(A, B, F[r])
+          insert!(to_insert, 1, A | B)
+          setdiff!(F[r+1], [A, B])
+          push!(F[r+1], A | B)
+          break
+        end
+      end
+    end
+
+    r += 1
+  end
+
+  return (n, F)
 end

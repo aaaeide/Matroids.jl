@@ -255,3 +255,88 @@ function knuth_matroid_construction_v4(n, enlargements)
 
   return (n, F)
 end
+
+"""
+In a sense memoized with a rank table.
+"""
+function knuth_matroid_construction_v5(n, enlargements, T=UInt16)
+  r = 1
+  F = [Set(0)]
+  rank = Dict{T, UInt8}(0=>0) # The rank table maps from the representation of a set to its assigned rank.
+  
+  while 2^n-1 ∉ F[r]
+    to_insert = collect(generate_covers_v2(F[r], n))
+    if r <= length(enlargements) && enlargements[r] !== nothing
+      append!(to_insert, enlargements[r])
+    end
+
+    push!(F, Set())  # Add F[r+1]
+    while length(to_insert) > 0
+      A = popfirst!(to_insert)
+      push!(F[r+1], A)
+      rank[A] = r # Julia is 1-indexed, so F[r+1] is the family of rank r.
+
+      for B in setdiff(F[r+1], A)
+        if !haskey(rank, A&B) || rank[A&B] >= r
+          # Update insert queue.
+          insert!(to_insert, 1, A | B)
+
+          # Update F[r+1].
+          setdiff!(F[r+1], [A, B])
+          push!(F[r+1], A | B)
+
+          # Update rank table.
+          rank[A|B] = r
+          break
+        end
+      end
+    end
+
+    r += 1
+  end
+
+  return (n, F)
+end
+
+
+# """
+# In this implementation of KMC we are implementing a trick from Knuth's 
+# ERECTION.W, in the covers are also generated iteratively.
+# """
+# function knuth_matroid_construction_v5(n, enlargements, T=UInt16)
+#   r = 1
+#   F = [Set(0)]
+#   mask = 2^n-1
+#   rank = Dict{T, UInt8}(0=>0)
+
+#   while mask ∉ F[r]
+#     # Create empty list.
+#     push!(F, Set())
+
+#     # Generate minimal closed sets for rank r+1.
+#     for y in F[r] # y is a closed set of rank r.
+#       t = mask - y # The set of elements not in y.
+#       # Find all sets in F[r+1] that already contain y and remove excess elements from t.
+#       for x in F[r+1]
+#         if (x & y == y) t &= ~x end
+#       end
+#       # Insert y ∪ a for all a ∈ t.
+#       while t > 0
+#         x = y|(t&-t)
+#         insert(x)
+#         t &= ~x
+#       end
+#     end
+#   end
+# end
+
+# function add_set!(x, F, r, rank)
+#   if x in F[r+1] return end
+#   for y in F[r+1]
+#     if haskey(rank, x&y) && rank[x&y]<=r
+#       continue
+#     end
+
+    
+#   end
+# end

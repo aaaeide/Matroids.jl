@@ -169,3 +169,58 @@ function randomized_knuth_matroid_construction_v4(n, p)
     r += 1
   end
 end
+
+"""
+Fifth implementation of random-KMC. This one uses a dictionary to keep track of previously seen sets.
+"""
+function randomized_knuth_matroid_construction_v5(n, p, T=UInt16)
+  r = 1
+  pr = 0
+  F = [Set(0)]
+  E = 2^n-1
+  rank = Dict{T, UInt8}(0=>0) # The rank table maps from the representation of a set to its assigned rank.
+
+  while true
+    to_insert = collect(generate_covers_v2(F[r], n))
+
+    # Apply coarsening to covers.
+    if r <= length(p) && E ∉ to_insert # No need to coarsen if E is added.
+      pr = p[r]
+      while pr > 0
+        A = rand(to_insert)
+        a = random_element(E - A)
+        to_insert = setdiff(to_insert, A) ∪ [A | a]
+        pr -= 1
+      end
+    end
+
+    # Superpose.
+    push!(F, Set()) # Add F[r+1].
+    while length(to_insert) > 0
+      A = popfirst!(to_insert)
+      push!(F[r+1], A)
+      rank[A] = r
+
+      for B in setdiff(F[r+1], A)
+        if !haskey(rank, A&B) || rank[A&B] >= r
+          # Update insert queue.
+          insert!(to_insert, 1, A | B)
+
+          # Update F[r+1].
+          setdiff!(F[r+1], [A, B])
+          push!(F[r+1], A | B)
+
+          # Update rank table.
+          rank[A|B] = r
+          break
+        end
+      end
+    end
+
+    if E ∈ F[r+1]
+      return (n, F)
+    end
+
+    r += 1
+  end
+end

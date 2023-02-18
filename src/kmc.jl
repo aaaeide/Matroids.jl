@@ -299,44 +299,59 @@ function knuth_matroid_construction_v5(n, enlargements, T=UInt16)
 end
 
 
-# """
-# In this implementation of KMC we are implementing a trick from Knuth's 
-# ERECTION.W, in the covers are also generated iteratively.
-# """
-# function knuth_matroid_construction_v5(n, enlargements, T=UInt16)
-#   r = 1
-#   F = [Set(0)]
-#   mask = 2^n-1
-#   rank = Dict{T, UInt8}(0=>0)
+"""
+In this implementation of KMC we are implementing a trick from Knuth's 
+ERECTION.W, in which the covers are generated iteratively, a a rank table is used to keep track of set ranks, and sets are added one at a time.
+"""
+function knuth_matroid_construction_v6(n, enlargements, T=UInt16)
+  r = 1
+  F = [Set(0)]
+  mask = 2^n-1
+  rank = Dict{T, UInt8}(0=>0)
 
-#   while mask ∉ F[r]
-#     # Create empty list.
-#     push!(F, Set())
+  while mask ∉ F[r]
+    # Create empty list.
+    push!(F, Set())
 
-#     # Generate minimal closed sets for rank r+1.
-#     for y in F[r] # y is a closed set of rank r.
-#       t = mask - y # The set of elements not in y.
-#       # Find all sets in F[r+1] that already contain y and remove excess elements from t.
-#       for x in F[r+1]
-#         if (x & y == y) t &= ~x end
-#       end
-#       # Insert y ∪ a for all a ∈ t.
-#       while t > 0
-#         x = y|(t&-t)
-#         insert(x)
-#         t &= ~x
-#       end
-#     end
-#   end
-# end
+    # Generate minimal closed sets for rank r+1.
+    for y in F[r] # y is a closed set of rank r.
+      t = mask - y # The set of elements not in y.
+      # Find all sets in F[r+1] that already contain y and remove excess elements from t.
+      for x in F[r+1]
+        if (x & y == y) t &= ~x end
+      end
+      # Insert y ∪ a for all a ∈ t.
+      while t > 0
+        x = y|(t&-t)
+        add_set!(x, F, r, rank)
+        t &= ~x
+      end
+    end
 
-# function add_set!(x, F, r, rank)
-#   if x in F[r+1] return end
-#   for y in F[r+1]
-#     if haskey(rank, x&y) && rank[x&y]<=r
-#       continue
-#     end
+    if r <= length(enlargements) && enlargements[r] !== nothing
+      for set in enlargements[r]
+        add_set!(set, F, r, rank)
+      end
+    end
 
-    
-#   end
-# end
+    r += 1
+  end
+
+  return (n,F)
+end
+
+function add_set!(x, F, r, rank)
+  if x in F[r+1] return end
+  for y in F[r+1]
+    if haskey(rank, x&y) && rank[x&y]<r
+      continue
+    end
+
+    # x ∩ y has rank > r, replace with x ∪ y.
+    setdiff!(F[r+1], y)
+    return add_set!(x|y, F, r, rank)
+  end
+
+  push!(F[r+1], x)
+  rank[x] = r
+end

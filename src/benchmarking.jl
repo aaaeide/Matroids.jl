@@ -30,9 +30,9 @@ function generate_benchmark_table(kmc)
     (n=10, p=[0,3,3], t=100)
     (n=10, p=[0,0,6], t=100)
     (n=10, p=[0,1,1,1], t=100)
-    (n=13, p=[0,6,0], t=10)
-    (n=13, p=[0,6,2], t=10)
-    (n=16, p=[0,6,0], t=10)
+    (n=13, p=[0,6,0], t=100)
+    (n=13, p=[0,6,2], t=100)
+    (n=16, p=[0,6,0], t=100)
   ]
 
   println("n  | (p_1, p_2, ...) | Trials | Time      | GC time   | Bytes allocated")

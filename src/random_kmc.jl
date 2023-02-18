@@ -224,3 +224,71 @@ function randomized_knuth_matroid_construction_v5(n, p, T=UInt16)
     r += 1
   end
 end
+
+"""
+Sixth implementation of random-KMC, in which the covers are generated iteratively, a a rank table is used to keep track of set ranks, and sets are added one at a time.
+"""
+
+function randomized_knuth_matroid_construction_v6(n, p, T=UInt16)
+  r = 1
+  pr = 0
+  F = [Set(0)]
+  E = 2^n-1
+  rank = Dict{T, UInt8}(0=>0)
+
+  while E ∉ F[r]
+    # Create empty set.
+    push!(F, Set())
+    
+    # Generate minimal closed sets for rank r+1.
+    for y in F[r] # y is a closed set of rank r.
+      t = E - y # The set of elements not in y.
+      # Find all sets in F[r+1] that already contain y and remove excess elements from t.
+      for x in F[r+1]
+        if (x & y == y) t &= ~x end
+      end
+      # Insert y ∪ a for all a ∈ t.
+      while t > 0
+        x = y|(t&-t)
+        add_set!(x, F, r, rank)
+        t &= ~x
+      end
+    end
+
+    if E ∈ F[r+1]
+      break
+    end
+
+    if r <= length(p)
+      # Apply coarsening.
+      pr = p[r]
+      while pr > 0 && E ∉ F[r+1]
+        A = rand(F[r+1])
+        a = random_element(E-A)
+        setdiff!(F[r+1], A)
+        add_set!(A|a, F, r, rank)
+        pr -= 1
+      end
+    end
+
+    r += 1
+  end
+
+  return (n, F)
+end
+
+function add_set!(x, F, r, rank)
+  if x in F[r+1] return end
+  for y in F[r+1]
+    if haskey(rank, x&y) && rank[x&y]<r
+      continue
+    end
+
+    # x ∩ y has rank > r, replace with x ∪ y.
+    setdiff!(F[r+1], y)
+    return add_set!(x|y, F, r, rank)
+  end
+
+  push!(F[r+1], x)
+  rank[x] = r
+end

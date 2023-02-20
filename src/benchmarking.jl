@@ -40,14 +40,16 @@ function generate_benchmark_table(kmc)
     (n=32, p=[0,6,2,1], t=10, T=UInt32)
     (n=63, p=[0,6,4,2,1], t=1, T=UInt64)
     (n=64, p=[0,6,4,4,2,1], t=1, T=UInt64)
+    (n=64, p=[0,6,4,4,2,1], t=1, T=BigInt)
     (n=128, p=[0,6,6,4,4,2,1], t=1, T=UInt128)
+    (n=129, p=[0,6,6,4,4,2,1], t=1, T=BigInt)
   ]
 
-  println("n   | (p_1, p_2, ...)     | Trials | Time      | GC time   | Bytes allocated")
-  println("----|---------------------|--------|-----------|-----------|-----------------")
+  println("n   | (p_1, p_2, ...)     | Trials | Time      | GC time   | Bytes allocated | T")
+  println("----|---------------------|--------|-----------|-----------|-----------------|---------")
 
   for test in tests
     (time, bytes, gctime) = benchmark(kmc, test.t, test.n, test.p, test.T)
-    println("$(test.n) | $(rpad(test.p, 16, " "))| $(rpad(test.t, 7, " "))| $(rpad(time, 10, " "))| $(rpad(gctime, 10, " "))| $(Base.format_bytes(bytes))")
+    println("$(rpad(test.n, 4, " "))| $(rpad(test.p, 20, " "))| $(rpad(test.t, 7, " "))| $(rpad(time, 10, " "))| $(rpad(gctime, 10, " "))| $(rpad(Base.format_bytes(bytes), 16))| $(test.T)")
   end
 end

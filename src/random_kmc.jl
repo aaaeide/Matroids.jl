@@ -264,9 +264,16 @@ function randomized_knuth_matroid_construction_v6(n, p, T=UInt16)
       pr = p[r]
       while pr > 0 && E ∉ F[r+1]
         A = rand(F[r+1])
-        a = random_element(E-A)
+        t = E-A
+        one_element_added::Vector{T} = []
+        while t > 0
+          x = A|(t&-t)
+          push!(one_element_added, x)
+          t &= ~x
+        end
+        Acupa = rand(one_element_added)
         setdiff!(F[r+1], A)
-        add_set!(A|a, F, r, rank)
+        add_set!(Acupa, F, r, rank)
         pr -= 1
       end
     end

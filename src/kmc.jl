@@ -302,6 +302,8 @@ end
 """
 In this implementation of KMC we are implementing a trick from Knuth's 
 ERECTION.W, in which the covers are generated iteratively, a a rank table is used to keep track of set ranks, and sets are added one at a time.
+
+The type of integer to use for representing sets as numbers can be supplied with the T argument. It defaults to UInt16, but needs to have at least as many bits as the size of the universe n.
 """
 function knuth_matroid_construction_v6(n, enlargements, T=UInt16)
   r = 1
@@ -341,15 +343,17 @@ function knuth_matroid_construction_v6(n, enlargements, T=UInt16)
 end
 
 function add_set!(x, F, r, rank)
-  if x in F[r+1] return end
   for y in F[r+1]
     if haskey(rank, x&y) && rank[x&y]<r
       continue
     end
 
-    # x ∩ y has rank > r, replace with x ∪ y.
+    if (x & y == x) return end # Not necessary?
+
+    # x ∩ y has rank > r, replacex and y with x ∪ y.
     setdiff!(F[r+1], y)
-    return add_set!(x|y, F, r, rank)
+    add_set!(x|y, F, r, rank)
+    return
   end
 
   push!(F[r+1], x)

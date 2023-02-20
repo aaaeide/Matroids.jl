@@ -232,8 +232,8 @@ Sixth implementation of random-KMC, in which a rank table is used to keep track 
 function randomized_knuth_matroid_construction_v6(n, p, T=UInt16)
   r = 1
   pr = 0
-  F = [Set(0)]
-  E = 2^n-1
+  F::Vector{Set{T}} = [Set(T(0))]
+  E::T = BigInt(2)^n-1
   rank = Dict{T, UInt8}(0=>0)
 
   while E ∉ F[r]

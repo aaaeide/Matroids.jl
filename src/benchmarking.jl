@@ -39,10 +39,12 @@ function generate_benchmark_table(kmc)
     (n=20, p=[0,6,2], t=10, T=UInt32)
     (n=32, p=[0,6,2,1], t=10, T=UInt32)
     (n=63, p=[0,6,4,2,1], t=1, T=UInt64)
+    (n=64, p=[0,6,4,4,2,1], t=1, T=UInt64)
+    (n=128, p=[0,6,6,4,4,2,1], t=1, T=UInt128)
   ]
 
-  println("n  | (p_1, p_2, ...) | Trials | Time      | GC time   | Bytes allocated")
-  println("---|-----------------|--------|-----------|-----------|-----------------")
+  println("n   | (p_1, p_2, ...)     | Trials | Time      | GC time   | Bytes allocated")
+  println("----|---------------------|--------|-----------|-----------|-----------------")
 
   for test in tests
     (time, bytes, gctime) = benchmark(kmc, test.t, test.n, test.p, test.T)

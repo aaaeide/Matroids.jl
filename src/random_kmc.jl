@@ -8,7 +8,7 @@ p is a list (p_1, p_2, ...), where p_r is the number of coarsening steps to appl
 
 This uses the Set-based KMC methods.
 """
-function randomized_knuth_matroid_construction_v1(n, p)
+function randomized_knuth_matroid_construction_v1(n, p, T=UInt16)
   E = Set([i for i in range(0,n-1)])
   
   # Step 1: Initialize.
@@ -113,21 +113,21 @@ end
 """
 Second implementation of random-KMC. This uses the bit-based KMC methods.
 """
-function randomized_knuth_matroid_construction_v2(n, p)
+function randomized_knuth_matroid_construction_v2(n, p, T=UInt16)
   return random_bitwise_kmc(generate_covers_v2, bitwise_superpose!, n, p)
 end
 
 """
 Third implementation of random-KMC. This sorts the sets by size before superposing.
 """
-function randomized_knuth_matroid_construction_v3(n, p)
+function randomized_knuth_matroid_construction_v3(n, p, T=UInt16)
   return random_bitwise_kmc(generate_covers_v2, sorted_bitwise_superpose!, n, p)
 end
 
 """
 Fourth implementation of random-KMC. This uses an iterative approach to superposition.
 """
-function randomized_knuth_matroid_construction_v4(n, p)
+function randomized_knuth_matroid_construction_v4(n, p, T=UInt16)
   r = 1
   pr = 0
   F = [Set(0)]
@@ -226,7 +226,7 @@ function randomized_knuth_matroid_construction_v5(n, p, T=UInt16)
 end
 
 """
-Sixth implementation of random-KMC, in which the covers are generated iteratively, a a rank table is used to keep track of set ranks, and sets are added one at a time.
+Sixth implementation of random-KMC, in which a rank table is used to keep track of set ranks, and the covers and enlargements are added one at a time, ensuring the matroid properties at all times.
 """
 
 function randomized_knuth_matroid_construction_v6(n, p, T=UInt16)

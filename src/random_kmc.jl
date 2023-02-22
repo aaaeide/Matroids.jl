@@ -281,7 +281,7 @@ function randomized_knuth_matroid_construction_v6(n, p, T=UInt16)
     r += 1
   end
 
-  return (n, F)
+  return (n, F, rank)
 end
 
 function add_set!(x, F, r, rank)

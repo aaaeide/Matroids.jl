@@ -60,3 +60,58 @@ include("../src/kmc.jl")
       [0,7,8,9],
     ])
 end
+
+@testset "KMC v6: Bases, rank and closure" begin
+  # The example from Knuth (1974) section 3
+  n = 10
+  enlargements = [nothing, [0x1a, 0x222, 0x64, 0x128, 0x288, 0x10c]]
+  M = knuth_matroid_construction_v6(n, enlargements)
+
+  @test_throws ArgumentError closure(M, 0xf000)
+
+  # In the Knuth example, the singleton sets are all closed.
+  @test rank_and_closure(M, 1) == (1, 1)
+
+  # Closed sets of rank 2
+  @test rank_and_closure(M, 0x06) == (2, 0x06)
+  @test rank_and_closure(M, 0x22) == (2, 0x0222)
+  @test rank_and_closure(M, 0x0c) == (2, 0x016c)
+
+  # Closed sets of rank 3
+  @test rank_and_closure(M, 0x23) == (3, 0x0223)
+  @test rank_and_closure(M, 0x0e) == (3, 0x03fe)
+
+  # Closed sets of rank 4 (the example matroid is rank 4, so this is E).
+  @test rank_and_closure(M, 0x0f) == (4, 2^n-1)
+
+  @test bases(M) == [set_to_bits(s) for s in [
+    [0,1,2,3], [0,1,2,4], [0,1,2,5], [0,1,2,6], [0,1,2,7], [0,1,2,8], [0,1,2,9],
+    [0,1,3,5], [0,1,3,6], [0,1,3,7], [0,1,3,8], [0,1,3,9],
+    [0,1,4,5], [0,1,4,6], [0,1,4,7], [0,1,4,8], [0,1,4,9],
+    [0,1,5,6], [0,1,5,7], [0,1,5,8],
+    [0,1,6,7], [0,1,6,8], [0,1,6,9],
+    [0,1,7,8], [0,1,7,9],
+    [0,1,8,9],
+    [0,2,3,4], [0,2,3,7], [0,2,3,9],
+    [0,2,4,5], [0,2,4,6], [0,2,4,7], [0,2,4,8], [0,2,4,9],
+    [0,2,5,7], [0,2,5,9],
+    [0,2,6,7], [0,2,6,9],
+    [0,2,7,8], [0,2,7,9],
+    [0,2,8,9], 
+    [0,3,4,5], [0,3,4,6], [0,3,4,7], [0,3,4,8], [0,3,4,9],
+    [0,3,5,7], [0,3,5,9],
+    [0,3,6,7], [0,3,6,9],
+    [0,3,7,8],
+    [0,3,8,9],
+    [0,4,5,6], [0,4,5,7], [0,4,5,8], [0,4,5,9],
+    [0,4,6,7], [0,4,6,8], [0,4,6,9],
+    [0,4,7,8], [0,4,7,9],
+    [0,4,8,9],
+    [0,5,6,7], [0,5,6,9],
+    [0,5,7,8], [0,5,7,9],
+    [0,5,8,9],
+    [0,6,7,8], [0,6,7,9], 
+    [0,6,8,9],
+    [0,7,8,9],
+  ]]
+end

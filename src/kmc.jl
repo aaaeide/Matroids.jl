@@ -298,6 +298,11 @@ function knuth_matroid_construction_v5(n, enlargements, T=UInt16)
   return (n, F)
 end
 
+struct KnuthMatroid{T}
+  n::Integer
+  F::Vector{Set{T}}
+  rank::Dict{T, UInt8}
+end
 
 """
 In this implementation of KMC we are implementing a trick from Knuth's 
@@ -305,7 +310,7 @@ ERECTION.W, in which the covers are generated iteratively, a a rank table is use
 
 The type of integer to use for representing sets as numbers can be supplied with the T argument. It defaults to UInt16, but needs to have at least as many bits as the size of the universe n.
 """
-function knuth_matroid_construction_v6(n, enlargements, T=UInt16)
+function knuth_matroid_construction_v6(n, enlargements, T=UInt16)::KnuthMatroid
   r = 1
   F = [Set(0)]
   mask = 2^n-1
@@ -339,7 +344,7 @@ function knuth_matroid_construction_v6(n, enlargements, T=UInt16)
     r += 1
   end
 
-  return (n,F)
+  return KnuthMatroid{T}(n,F,rank)
 end
 
 function add_set!(x, F, r, rank)

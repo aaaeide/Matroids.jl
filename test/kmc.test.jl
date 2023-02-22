@@ -333,7 +333,8 @@ end
   F4 = Set(2^n-1) # r=4: The family of only one set - E
   F = [F0, F1, F2, F3, F4]
 
-  _, result = knuth_matroid_construction_v6(n, enlargements)
+  M = knuth_matroid_construction_v6(n, enlargements)
+  result = M.F
   
   @test result[1] == F0
   @test result[2] == F1

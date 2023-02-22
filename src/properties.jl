@@ -34,3 +34,19 @@ function bases(M)
     if rank(M, base) == r
   ])
 end
+
+function rank_and_closure(M::KnuthMatroid, A)
+  if A > 2^M.n-1
+    throw(ArgumentError("$(A) is not a subset of $(2^M.n-1)"))
+  end
+
+  for (r, Fr) in enumerate(M.F)
+    for B in Fr
+      if A & B == A
+        return (r-1, B)
+      end
+    end
+  end
+end
+
+function bases(M::KnuthMatroid) end

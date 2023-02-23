@@ -1,3 +1,5 @@
+include("types.jl")
+
 ##################
 # HELPER METHODS #
 ##################
@@ -296,14 +298,6 @@ function knuth_matroid_construction_v5(n, enlargements, T=UInt16)
   end
 
   return (n, F)
-end
-
-struct KnuthMatroid{T}
-  n::Integer
-  F::Vector{Set{T}} # Closed sets by rank
-  I::Vector{Set{T}} # Independent sets by rank
-  C::Set{T} # Circuits
-  rank::Dict{T, UInt8}
 end
 
 """

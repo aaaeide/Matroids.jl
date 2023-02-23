@@ -1,7 +1,0 @@
-{
-	"name": "matroids.jl devcontainer",
-	"build": {
-		"dockerfile": "Dockerfile"
-	},
-	"postCreateCommand": "/julia-devcontainer-scripts/postcreate.jl"
-}

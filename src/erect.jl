@@ -45,26 +45,28 @@ function erect_v1(n, enlargements)::KnuthMatroid{UInt16}
       for set in enlargements[r]
         insert_set!(set, F, r, rank)
       end
-    end
-
-    # println("\nF[$r]")
-    # for t in F[r+1]
-    #   print_set(t)
-    # end
-    
+    end 
     
     # Assign rank to sets and add independent ones to I.
-    # println("\n\nIndependent sets for rank $(r)")
     for m in F[r+1]
       mark!(m, I, r, rank)
     end
-    # println()
     
     # Next rank.
     r += 1
   end
 
-  return KnuthMatroid{UInt16}(n,F,I,rank)
+  C = Set() # C is the set of circuits (minimal dependent sets) for M.
+  k = 1
+  while k <= mask
+    for i in 0:k-1 if rank[k+i] == rank[i]
+      push!(C, UInt16(k+i))
+      unmark!(k+i, rank[i]+101, rank, mask)
+    end end
+    k += k
+  end
+
+  return KnuthMatroid{UInt16}(n,F,I,C,rank)
 end
 
 """
@@ -99,6 +101,18 @@ function mark!(m, I, r, rank)
     v = t&(t-1)
     mark!(m-t+v, I, r, rank)
     t = v
+  end
+end
+
+function unmark!(m, card, rank, mask)
+  if rank[m] < 100
+    rank[m] = card
+    t = mask-m
+    while t != 0
+      v = t&(t-1)
+      unmark!(m+t-v, card+1, rank, mask)
+      t=v
+    end
   end
 end
 

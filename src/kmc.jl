@@ -300,8 +300,9 @@ end
 
 struct KnuthMatroid{T}
   n::Integer
-  F::Vector{Set{T}}
-  I::Vector{Set{T}}
+  F::Vector{Set{T}} # Closed sets by rank
+  I::Vector{Set{T}} # Independent sets by rank
+  C::Set{T} # Circuits
   rank::Dict{T, UInt8}
 end
 
@@ -345,7 +346,7 @@ function knuth_matroid_construction_v6(n, enlargements, T=UInt16)::KnuthMatroid
     r += 1
   end
 
-  return KnuthMatroid{T}(n,F,[],rank)
+  return KnuthMatroid{T}(n,F,[],Set(),rank)
 end
 
 function add_set!(x, F, r, rank)

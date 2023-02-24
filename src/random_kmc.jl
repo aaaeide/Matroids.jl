@@ -176,7 +176,7 @@ Fifth implementation of random-KMC. This one uses a dictionary to keep track of 
 function randomized_knuth_matroid_construction_v5(n, p, T=UInt16)::KnuthMatroid{T}
   r = 1
   pr = 0
-  F = [Set(0)]
+  F::Vector{Set{T}} = [Set(T(0))]
   E = 2^n-1
   rank = Dict{T, UInt8}(0=>0) # The rank table maps from the representation of a set to its assigned rank.
 
@@ -184,9 +184,9 @@ function randomized_knuth_matroid_construction_v5(n, p, T=UInt16)::KnuthMatroid{
     to_insert = collect(generate_covers_v2(F[r], n))
 
     # Apply coarsening to covers.
-    if r <= length(p) && E ∉ to_insert # No need to coarsen if E is added.
+    if r <= length(p)
       pr = p[r]
-      while pr > 0
+      while length(to_insert) > 0 && pr > 0 && E ∉ to_insert # No need to coarsen if E is added.
         A = rand(to_insert)
         a = random_element(E - A)
         to_insert = setdiff(to_insert, A) ∪ [A | a]

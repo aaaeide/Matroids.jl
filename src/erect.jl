@@ -21,7 +21,6 @@ function erect_v1(n, enlargements)::KnuthMatroid{UInt16}
   rank[0] = 0
 
   while mask ∉ F[r]
-    # Create empty list.
     push!(F, Set())
     push!(I, Set())
 
@@ -88,7 +87,7 @@ function insert_set!(x, F, r, rank)
 end
 
 """
-Sets rank[m']=r for all subsets m' ⊆ m whose rank is not already ≤ r, and outputs m' if it is independent (that is, if its rank equals its cardinality).
+Given a closed set m, sets rank[m']=r for all subsets m' ⊆ m whose rank is not already ≤ r, and adds m' to I if it is independent (that is, if its rank equals its cardinality).
 """
 function mark!(m, I, r, rank)
   if haskey(rank, m) && rank[m] <= r

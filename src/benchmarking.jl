@@ -30,11 +30,11 @@ function generate_benchmark_table_kmc(kmc)
     (n=10, p=[0,3,3], t=100, T=UInt16)
     (n=10, p=[0,0,6], t=100, T=UInt16)
     (n=10, p=[0,1,1,1], t=100, T=UInt16)
-    (n=13, p=[0,6,0], t=100, T=UInt16)
-    (n=13, p=[0,6,2], t=100, T=UInt16)
-    (n=16, p=[0,6,0], t=100, T=UInt16)
-    (n=16, p=[0,6,1], t=100, T=UInt16)
-    (n=16, p=[0,0,6], t=100, T=UInt16)
+    (n=13, p=[0,6,0], t=10, T=UInt16)
+    (n=13, p=[0,6,2], t=10, T=UInt16)
+    (n=16, p=[0,6,0], t=10, T=UInt16)
+    (n=16, p=[0,6,1], t=10, T=UInt16)
+    (n=16, p=[0,0,6], t=10, T=UInt16)
     (n=20, p=[0,6,0], t=10, T=UInt32)
     (n=20, p=[0,6,2], t=10, T=UInt32)
     (n=32, p=[0,6,2,1], t=10, T=UInt32)
@@ -89,9 +89,6 @@ end
       if !haskey(matroids, rank) 
         matroids[rank] = Dict("trials"=>0, "bases"=>[], "circuits"=>[], "time"=>[], "gctime"=>[], "bytes"=>[])
       end
-
-      print(m.I)
-      readline()
 
       matroids[rank]["trials"] += 1
       push!(matroids[rank]["bases"], length(m.I[rank+1]))

@@ -134,7 +134,7 @@ function randomized_knuth_matroid_construction_v4(n, p, T=UInt16)::KnuthMatroid{
   E = 2^n - 1 # The set of all elements in E.
 
   while true
-    to_insert = collect(generate_covers_v2(F[r], n))
+    to_insert = generate_covers_v2(F[r], n)
 
     # Apply coarsening to covers.
     if r <= length(p) && E ∉ to_insert # No need to coarsen if E is added.
@@ -150,12 +150,12 @@ function randomized_knuth_matroid_construction_v4(n, p, T=UInt16)::KnuthMatroid{
     # Superpose.
     push!(F, Set()) # Add F[r+1].
     while length(to_insert) > 0
-      A = popfirst!(to_insert)
+      A = pop!(to_insert)
       push!(F[r+1], A)
 
       for B in setdiff(F[r+1], A)
         if should_merge(A, B, F[r])
-          insert!(to_insert, 1, A | B)
+          push!(to_insert, A | B)
           setdiff!(F[r+1], [A, B])
           push!(F[r+1], A | B)
         end
@@ -181,7 +181,7 @@ function randomized_knuth_matroid_construction_v5(n, p, T=UInt16)::KnuthMatroid{
   rank = Dict{T, UInt8}(0=>0) # The rank table maps from the representation of a set to its assigned rank.
 
   while true
-    to_insert = collect(generate_covers_v2(F[r], n))
+    to_insert = generate_covers_v2(F[r], n)
 
     # Apply coarsening to covers.
     if r <= length(p)
@@ -197,14 +197,14 @@ function randomized_knuth_matroid_construction_v5(n, p, T=UInt16)::KnuthMatroid{
     # Superpose.
     push!(F, Set()) # Add F[r+1].
     while length(to_insert) > 0
-      A = popfirst!(to_insert)
+      A = pop!(to_insert)
       push!(F[r+1], A)
       rank[A] = r
 
       for B in setdiff(F[r+1], A)
         if !haskey(rank, A&B) || rank[A&B] >= r
           # Update insert queue.
-          insert!(to_insert, 1, A | B)
+          push!(to_insert, A | B)
 
           # Update F[r+1].
           setdiff!(F[r+1], [A, B])
@@ -228,7 +228,6 @@ end
 """
 Sixth implementation of random-KMC, in which a rank table is used to keep track of set ranks, and the covers and enlargements are added one at a time, ensuring the matroid properties at all times.
 """
-
 function randomized_knuth_matroid_construction_v6(n, p, T=UInt16)::KnuthMatroid{T}
   r = 1
   pr = 0

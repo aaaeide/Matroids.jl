@@ -38,10 +38,6 @@ function randomized_erect_v1(n, p, T=UInt16)
         t &= ~x
       end
     end
-
-    if E ∈ F[r+1]
-      break
-    end
     
     if r <= length(p)
       # Apply coarsening.

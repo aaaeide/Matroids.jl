@@ -119,13 +119,13 @@ If F contains any two sets A, B whose intersection A ∩ B is not contained in C
 This implementation represents the sets using bits.
 """
 function bitwise_superpose!(F, F_prev)
-  As = collect(F)
+  As = copy(F)
   while length(As) !== 0
-    A = popfirst!(As)
+    A = pop!(As)
 
     for B in setdiff(F, A)
       if should_merge(A, B, F_prev)
-        insert!(As, 1, A | B)
+        push!(As, A | B)
         setdiff!(F, [A, B])
         push!(F, A | B)
         break
@@ -225,7 +225,7 @@ function knuth_matroid_construction_v3(n, enlargements)
 end
 
 """
-This is an attempt at a smarter implementation than directly following the setup from Knuth's 1974 article, instead inspired by Knuth's ERECTION.W implementation, wherein the superpose step is replaced by an insert operation that inserts new closed sets into the family of current rank one at a time, superposing on the fly.
+This is an attempt at a smarter implementation than directly following the setup from Knuth's 1974 article. The superpose step is replaced by an insert operation that inserts new closed sets into the family of current rank one at a time, superposing on the fly.
 """
 function knuth_matroid_construction_v4(n, enlargements)
   r = 1

@@ -168,6 +168,25 @@ function enlarge!(enlargements, F, r, rank, ins!)
   end
 end
 
+"""
+Given a closed set m,
+1. simply return if rank[m] < r (we've seen this already)
+2. add it to I if |m| = r
+3. recursively call this func on all m' ⊂ m st |m'| = |m| - 1
+"""
+function mark_independent_sets!(m, I, r, rank)
+  if haskey(rank, m) && rank[m] < r return end
+  if Base.count_ones(m) == r push!(I[r+1], m) end
+  rank[m] = r
+
+  t = m
+  while t != 0
+    v = t&(t-1)
+    mark_independent_sets!(m-t+v, I, r, rank)
+    t = v
+  end
+end
+
 
 function erect_v2(n, enlargements, T=UInt16)::KnuthMatroid{T}
   r = 1
@@ -185,7 +204,7 @@ function erect_v2(n, enlargements, T=UInt16)::KnuthMatroid{T}
     generate_covers_and_insert(F, r, E, rank, insert_set_v2!)
     enlarge!(enlargements, F, r, rank, insert_set_v2!)
 
-    # TODO: mark independent sets.
+    for m in F[r+1] mark_independent_sets!(m, I, r, rank) end
 
     r += 1
   end

@@ -120,3 +120,75 @@ function set_to_string(t)
   for j in 0:16 if t&(1<<j)!=0 str *= string(j) end end
   return str * " "
 end
+
+"""
+Generates minimal closed sets for rank r+1 and inserts to F[r+1] using supplied insert function.
+  """
+  function generate_covers_and_insert(F, r, E, rank, ins!)
+    for y in F[r] # y is a closed set of rank r.
+    t = E - y   # The set of elements not in y.
+    # Find all sets in F[r+1] that already contain y and remove excess elements from t.
+    for x in F[r+1]
+      if (x&y == y) t &= ~x end # x subseteq y
+    end
+    # Callback y cup a for all a in t.
+    while t > 0
+      x = y|(t&-t)
+      ins!(x, F, r, rank)
+      t &= ~x
+    end
+  end
+end
+
+"""
+Inserts set x into F[r+1], but augments x if it is necessary to ensure no two
+sets in F[r] have an intersection of rank greater than r. This ensures that 
+F[r] only consists of closed sets (maximal dependent sets).
+
+Adds closed sets to rank table.
+"""
+function insert_set_v2!(x, F, r, rank)
+  for y in F[r+1]
+    # If x&y is in the rank table, it has rank <= r.
+    if haskey(rank, x&y) && rank[x&y] < r continue end
+
+    # x&y has rank > r (not seen yet), replace x and y with x|y.
+    setdiff!(F[r+1], y)
+    insert_set_v2!(x|y, F, r, rank)
+    return
+  end
+
+  push!(F[r+1], x)
+  rank[x] = r
+end
+
+function enlarge!(enlargements, F, r, rank, ins!)
+  if r <= length(enlargements) && enlargements[r] !== nothing
+    for set in enlargements[r] ins!(set, F, r, rank) end
+  end
+end
+
+
+function erect_v2(n, enlargements, T=UInt16)::KnuthMatroid{T}
+  r = 1
+  E = big"2"^n-1
+  rank = Dict{T, UInt8}() # Keeps track of closed sets' ranks.
+
+  F = [Set(0)]
+  I = [Set(0)]
+  rank[0] = 0
+
+  while E ∉ F[r]
+    push!(F, Set())
+    push!(I, Set())
+
+    generate_covers_and_insert(F, r, E, rank, insert_set_v2!)
+    enlarge!(enlargements, F, r, rank, insert_set_v2!)
+
+    # TODO: mark independent sets.
+
+    r += 1
+  end
+
+  return KnuthMatroid{T}(n, F, I, Set(), rank)
+end

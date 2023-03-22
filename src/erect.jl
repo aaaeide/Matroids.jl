@@ -124,7 +124,7 @@ end
 """
 Generates minimal closed sets for rank r+1 and inserts to F[r+1] using supplied insert function.
   """
-  function generate_covers_and_insert(F, r, E, rank, ins!)
+  function generate_covers_and_insert!(F, I, r, E, rank, ins!)
     for y in F[r] # y is a closed set of rank r.
     t = E - y   # The set of elements not in y.
     # Find all sets in F[r+1] that already contain y and remove excess elements from t.
@@ -134,7 +134,7 @@ Generates minimal closed sets for rank r+1 and inserts to F[r+1] using supplied 
     # Callback y cup a for all a in t.
     while t > 0
       x = y|(t&-t)
-      ins!(x, F, r, rank)
+      ins!(x, F, I, r, rank)
       t &= ~x
     end
   end
@@ -147,45 +147,65 @@ F[r] only consists of closed sets (maximal dependent sets).
 
 Adds closed sets to rank table.
 """
-function insert_set_v2!(x, F, r, rank)
+function insert_set_v2!(x, F, I, r, rank)
   for y in F[r+1]
-    # If x&y is in the rank table, it has rank <= r.
     if haskey(rank, x&y) && rank[x&y] < r continue end
 
     # x&y has rank > r (not seen yet), replace x and y with x|y.
     setdiff!(F[r+1], y)
-    insert_set_v2!(x|y, F, r, rank)
+    insert_set_v2!(x|y, F, I, r, rank)
     return
   end
+  
+  # x is a maximal dependent set, and contains some number of independent sets of rank = cardinality = r
+  # each closed set x gets here once, though some sets will get here that later get subsumed in a bigger set
+
+  mark_independent_subsets!(x, I, r, rank)
 
   push!(F[r+1], x)
   rank[x] = r
 end
 
-function enlarge!(enlargements, F, r, rank, ins!)
+function enlarge!(enlargements, F, I, r, rank, ins!)
   if r <= length(enlargements) && enlargements[r] !== nothing
-    for set in enlargements[r] ins!(set, F, r, rank) end
+    for set in enlargements[r] ins!(set, F, I, r, rank) end
   end
 end
 
-"""
-Given a closed set m,
-1. simply return if rank[m] < r (we've seen this already)
-2. add it to I if |m| = r
-3. recursively call this func on all m' ⊂ m st |m'| = |m| - 1
-"""
-function mark_independent_sets!(m, I, r, rank)
-  if haskey(rank, m) && rank[m] < r return end
-  if Base.count_ones(m) == r push!(I[r+1], m) end
-  rank[m] = r
-
-  t = m
+function mark_independent_subsets!(x, I, r, rank)
+  println("\nCHECKING THE SUBSETS OF CLOSED SET $(set_to_string(x))")
+  if haskey(rank, x) && rank[x] < r return end
+  if Base.count_ones(x) == r 
+    println("GOT ONE: $(set_to_string(x))")
+    push!(I[r+1], x)
+  end
+  readline()
+  t = x
   while t != 0
     v = t&(t-1)
-    mark_independent_sets!(m-t+v, I, r, rank)
+    mark_independent_subsets!(x-t+v, I, r, rank)
     t = v
   end
 end
+
+# """
+# Given a closed set m,
+# 1. simply return if rank[m] < r (we've seen this already)
+# 2. add it to I if |m| = r
+# 3. recursively call this func on all m' ⊂ m st |m'| = |m| - 1
+# """
+# function mark_independent_sets!(m, I, r, rank)
+#   if haskey(rank, m) && rank[m] < r return end
+#   if Base.count_ones(m) == r push!(I[r+1], m) end
+#   rank[m] = r
+
+#   t = m
+#   while t != 0
+#     v = t&(t-1)
+#     mark_independent_sets!(m-t+v, I, r, rank)
+#     t = v
+#   end
+# end
 
 
 function erect_v2(n, enlargements, T=UInt16)::KnuthMatroid{T}
@@ -201,10 +221,8 @@ function erect_v2(n, enlargements, T=UInt16)::KnuthMatroid{T}
     push!(F, Set())
     push!(I, Set())
 
-    generate_covers_and_insert(F, r, E, rank, insert_set_v2!)
-    enlarge!(enlargements, F, r, rank, insert_set_v2!)
-
-    for m in F[r+1] mark_independent_sets!(m, I, r, rank) end
+    generate_covers_and_insert!(F, I, r, E, rank, insert_set_v2!)
+    enlarge!(enlargements, F, I, r, rank, insert_set_v2!)
 
     r += 1
   end

@@ -1,3 +1,13 @@
+struct KnuthMatroid{T}
+  n::Integer
+  r::Integer
+  F::Vector{Set{T}} # Closed sets by rank
+  I::Vector{Set{T}} # Independent sets by rank
+  C::Set{T} # Circuits
+  rank::Dict{T, UInt8}
+end
+
+
 """
 An improved version of KMC we are also finding the independent sets and circuits of the matroid during generation.
 
@@ -65,7 +75,7 @@ function erect_v1(n, enlargements)::KnuthMatroid{UInt16}
     k += k
   end
 
-  return KnuthMatroid{UInt16}(n,F,I,C,rank)
+  return KnuthMatroid{UInt16}(n,r-1,F,I,C,rank)
 end
 
 """
@@ -122,25 +132,6 @@ function set_to_string(t)
 end
 
 """
-Generates minimal closed sets for rank r+1 and inserts to F[r+1] using supplied insert function.
-  """
-  function generate_covers_and_insert!(F, I, r, E, rank, ins!)
-    for y in F[r] # y is a closed set of rank r.
-    t = E - y   # The set of elements not in y.
-    # Find all sets in F[r+1] that already contain y and remove excess elements from t.
-    for x in F[r+1]
-      if (x&y == y) t &= ~x end # x subseteq y
-    end
-    # Callback y cup a for all a in t.
-    while t > 0
-      x = y|(t&-t)
-      ins!(x, F, I, r, rank)
-      t &= ~x
-    end
-  end
-end
-
-"""
 Inserts set x into F[r+1], but augments x if it is necessary to ensure no two
 sets in F[r] have an intersection of rank greater than r. This ensures that 
 F[r] only consists of closed sets (maximal dependent sets).
@@ -160,53 +151,55 @@ function insert_set_v2!(x, F, I, r, rank)
   # x is a maximal dependent set, and contains some number of independent sets of rank = cardinality = r
   # each closed set x gets here once, though some sets will get here that later get subsumed in a bigger set
 
-  mark_independent_subsets!(x, I, r, rank)
-
+  
   push!(F[r+1], x)
+  c = Base.count_ones(x) # Find |x|.
+  mark_independent_subsets!(x, I, r, c, rank)
+end
+
+"""
+Given a closed set x,
+1. simply return if rank[x] < r (we've seen this already)
+2. add it to I if |x| = r
+3. recursively call this func on all x' ⊂ x st |x'| = |x| - 1
+"""
+function mark_independent_subsets!(x, I, r, c, rank)
+  if haskey(rank, x) && rank[x] <= r return end
+  if c == r push!(I[r+1], x) end
   rank[x] = r
-end
-
-function enlarge!(enlargements, F, I, r, rank, ins!)
-  if r <= length(enlargements) && enlargements[r] !== nothing
-    for set in enlargements[r] ins!(set, F, I, r, rank) end
-  end
-end
-
-function mark_independent_subsets!(x, I, r, rank)
-  println("\nCHECKING THE SUBSETS OF CLOSED SET $(set_to_string(x))")
-  if haskey(rank, x) && rank[x] < r return end
-  if Base.count_ones(x) == r 
-    println("GOT ONE: $(set_to_string(x))")
-    push!(I[r+1], x)
-  end
-  readline()
   t = x
   while t != 0
     v = t&(t-1)
-    mark_independent_subsets!(x-t+v, I, r, rank)
+    mark_independent_subsets!(x-t+v, I, r, c-1, rank)
     t = v
   end
 end
 
-# """
-# Given a closed set m,
-# 1. simply return if rank[m] < r (we've seen this already)
-# 2. add it to I if |m| = r
-# 3. recursively call this func on all m' ⊂ m st |m'| = |m| - 1
-# """
-# function mark_independent_sets!(m, I, r, rank)
-#   if haskey(rank, m) && rank[m] < r return end
-#   if Base.count_ones(m) == r push!(I[r+1], m) end
-#   rank[m] = r
+"""
+Generates minimal closed sets for rank r+1 and inserts to F[r+1] using supplied insert function.
+"""
+function generate_covers_and_insert!(F, I, r, E, rank)
+  for y in F[r] # y is a closed set of rank r.
+    t = E - y   # The set of elements not in y.
+    # Find all sets in F[r+1] that already contain y and remove excess elements from t.
+    for x in F[r+1]
+      if (x&y == y) t &= ~x end # x subseteq y
+    end
+    # Callback y cup a for all a in t.
+    while t > 0
+      x = y|(t&-t)
+      insert_set_v2!(x, F, I, r, rank)
+      t &= ~x
+    end
+  end
+end
 
-#   t = m
-#   while t != 0
-#     v = t&(t-1)
-#     mark_independent_sets!(m-t+v, I, r, rank)
-#     t = v
-#   end
-# end
 
+function enlarge!(enlargements, F, I, r, rank)
+  if r <= length(enlargements) && enlargements[r] !== nothing
+    for set in enlargements[r] insert_set_v2!(set, F, I, r, rank) end
+  end
+end
 
 function erect_v2(n, enlargements, T=UInt16)::KnuthMatroid{T}
   r = 1
@@ -221,11 +214,11 @@ function erect_v2(n, enlargements, T=UInt16)::KnuthMatroid{T}
     push!(F, Set())
     push!(I, Set())
 
-    generate_covers_and_insert!(F, I, r, E, rank, insert_set_v2!)
-    enlarge!(enlargements, F, I, r, rank, insert_set_v2!)
+    generate_covers_and_insert!(F, I, r, E, rank)
+    enlarge!(enlargements, F, I, r, rank)
 
     r += 1
   end
 
-  return KnuthMatroid{T}(n, F, I, Set(), rank)
+  return KnuthMatroid{T}(n, r-1, F, I, Set(), rank)
 end

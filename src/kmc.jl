@@ -5,6 +5,7 @@ struct KnuthMatroid{T}
   I::Vector{Set{T}} # Independent sets by rank
   C::Set{T} # Circuits
   rank::Dict{T, UInt8}
+  Type::DataType
 end
 
 """
@@ -25,7 +26,7 @@ function knuth_matroid(n, X, T=UInt16)
     r += 1
   end
 
-  return KnuthMatroid{T}(n,r-1,F,[],Set(),rank)
+  return KnuthMatroid{T}(n,r-1,F,[],Set(),rank, T)
 end
 
 """
@@ -45,7 +46,7 @@ function random_knuth_matroid(n, p, T=UInt16)::KnuthMatroid{T}
     r += 1
   end
 
-  return KnuthMatroid{T}(n, r-1, F, [], Set(), rank)
+  return KnuthMatroid{T}(n, r-1, F, [], Set(), rank, T)
 end
 
 """

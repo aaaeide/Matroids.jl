@@ -1,4 +1,4 @@
-struct KnuthMatroid{T}
+struct ErectedMatroid{T}
   n::Integer
   r::Integer
   F::Vector{Set{T}} # Closed sets by rank
@@ -13,7 +13,7 @@ An improved version of KMC we are also finding the independent sets and circuits
 
 This version assigns the Hamming weight of all subsets of E upfront. This is infeasible for values of n much larger than 16.
 """
-function erect_v1(n, enlargements)::KnuthMatroid{UInt16}
+function erect_v1(n, enlargements)::ErectedMatroid{UInt16}
   # Initialize.
   r = 1
   mask = 2^n-1
@@ -75,7 +75,7 @@ function erect_v1(n, enlargements)::KnuthMatroid{UInt16}
     k += k
   end
 
-  return KnuthMatroid{UInt16}(n,r-1,F,I,C,rank)
+  return ErectedMatroid{UInt16}(n,r-1,F,I,C,rank)
 end
 
 """
@@ -201,7 +201,7 @@ function enlarge!(enlargements, F, I, r, rank)
   end
 end
 
-function erect_v2(n, enlargements, T=UInt16)::KnuthMatroid{T}
+function erect_v2(n, enlargements, T=UInt16)::ErectedMatroid{T}
   r = 1
   E = big"2"^n-1
   rank = Dict{T, UInt8}() # Keeps track of closed sets' ranks.
@@ -220,5 +220,5 @@ function erect_v2(n, enlargements, T=UInt16)::KnuthMatroid{T}
     r += 1
   end
 
-  return KnuthMatroid{T}(n, r-1, F, I, Set(), rank)
+  return ErectedMatroid{T}(n, r-1, F, I, Set(), rank)
 end

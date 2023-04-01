@@ -1,6 +1,10 @@
 include("kmc.jl")
 
 """
+Tests for the axioms for the closed sets of a matroid, as given in Knuth (1974).
+"""
+
+"""
 The ground set is closed. E ∈ F.
 """
 function c1(m::KnuthMatroid)

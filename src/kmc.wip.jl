@@ -1,13 +1,3 @@
-struct KnuthMatroid{T}
-  n::Integer
-  # r::Integer
-  F::Vector{Set{T}} # Closed sets by rank
-  I::Vector{Set{T}} # Independent sets by rank
-  C::Set{T} # Circuits
-  rank::Dict{T, UInt8}
-end
-
-
 ##################
 # VERSION ONE    #
 ##################

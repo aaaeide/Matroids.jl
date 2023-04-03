@@ -1,12 +1,4 @@
-struct KnuthMatroid{T}
-  n::Integer
-  r::Integer
-  F::Vector{Set{T}} # Closed sets by rank
-  I::Vector{Set{T}} # Independent sets by rank
-  C::Set{T} # Circuits
-  rank::Dict{T, UInt8}
-  Type::DataType
-end
+include("types.jl")
 
 """
 Knuth's matroid construction (1974). Generates a matroid in terms of its closed sets, given by the size of the universe n, a list of enlargements X and optionally the type T to use for set representation. T must have bitwidth >= n.
@@ -26,13 +18,13 @@ function knuth_matroid(n, X, T=UInt16)
     r += 1
   end
 
-  return KnuthMatroid{T}(n,r-1,F,[],Set(),rank, T)
+  return ClosedSetsMatroid{T}(n,r-1,F,rank, T)
 end
 
 """
 Randomized version of Knuth's matroid construction. Random matroids are generated via the method of random coarsening described in the 1974 paper. Accepts the size of the universe n, a list p = [p_1, p_2, ...], where p_i denotes the number of coarsenings to apply at rank i, and optionally the type T to use for set representation. T must have bitwidth >= n.
 """
-function random_knuth_matroid(n, p, T=UInt16)::KnuthMatroid{T}
+function random_knuth_matroid(n, p, T=UInt16)::ClosedSetsMatroid{T}
   r = 1
   F::Vector{Set{T}} = [Set(T(0))]
   E::T = BigInt(2)^n-1
@@ -46,7 +38,7 @@ function random_knuth_matroid(n, p, T=UInt16)::KnuthMatroid{T}
     r += 1
   end
 
-  return KnuthMatroid{T}(n, r-1, F, [], Set(), rank, T)
+  return ClosedSetsMatroid{T}(n, r-1, F, rank, T)
 end
 
 """

@@ -13,5 +13,5 @@ using Compose
 import Fontconfig, Cairo
 
 function draw_graph(g, nodelabel, filename="graph.png")
-  draw(PNG(filename, 32cm, 32cm), gplot(g, nodelabel=nodelabel))
+  draw(PNG(filename, 64cm, 64cm), gplot(g, nodelabel=nodelabel))
 end

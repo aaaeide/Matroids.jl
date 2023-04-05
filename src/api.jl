@@ -2,6 +2,7 @@ using Graphs
 using DataStructures
 
 include("types.jl")
+include("utils.jl")
 
 """
     rank(M::KnuthMatroid, S::Integer)
@@ -95,16 +96,29 @@ function find_transfer_path(Ms, Ss, i::Integer, j::Integer, n::Integer)
 
   println("FINDING SHORTEST PATH BETWEEN $s AND $(bitstring(Ss[j]))")
 
+  # This BFS gives us the path [s, e_1, ..., e_k] of elements (0..n-1)
   return G, bfs(G, s, v -> d[v] == j)
 end
 
 
-# function transfer(i, path, G, d, n)
-#   @assert path[1] == n # The source node, not an element.
-#   for e in path[2:end]
-    
-#   end
-# end
+function transfer!(i, path, Ms, Ss, d, n)
+  @assert path[1] == n+1 # The source node, not an element in E.
+
+  # Ss[i] receives path[2] for a marginal gain of 1.
+  Ss[i] |= 1<<path[2]
+  
+  # For each path position j in 2:end-1, d[j] should lose path[j] and get path[j+1].
+  for j in 2:length(path)-1
+    r = rank(Ms[d[j]], Ss[d[j]])
+    Ss[d[j]] &= ~1<<path[j] # Lose an element.
+    Ss[d[j]] |= 1<<path[j+1] # Gain next element.
+    r´ = rank(Ms[d[j]], Ss[d[j]])
+    @assert r == r´
+  end
+
+  # The last set simply loses an element.
+  Ss[d[path[end]]] &= ~1<<path[end]
+end
 
 """
     function bfs(G, s, fn)

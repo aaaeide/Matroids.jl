@@ -1,0 +1,13 @@
+name = "Matroids"
+uuid = "15f40b7d-0f0d-4bdc-ab23-18b4f9c2ce47"
+authors = ["aaaeide <andreasaaeide@gmail.com> and contributors"]
+version = "1.0.0-DEV"
+
+[compat]
+julia = "1"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]

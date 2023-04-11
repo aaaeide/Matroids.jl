@@ -72,29 +72,20 @@ function Δ(M, S, e)
   return rank(M, S | 1<<e) - rank(M, S)
 end
 
+
 function find_transfer_path(Ms, Ss, i::Integer, j::Integer, n::Integer)
   G, d = exchange_graph(Ms, Ss, n)
 
-  
   # Compute the set F_i of elements with positive marginal gain for i.
   # TODO: Remember this between iterations.
   F_i = [e for e in vertices(G) if Δ(Ms[i], Ss[i], e-1) == 1]
-  println("F_i: $F_i")
   
-  # Add source node.
   add_vertex!(G)
   s = last(vertices(G))
-  @assert neighbors(G, s) == []
-
+  for e in F_i add_edge!(G, s, e) end
   
-  # Add edge (s,e) for each e ∈ F_i.
-  for e in F_i @assert add_edge!(G, s, e) end
-  println(neighbors(G, s))
-  
-  nodelabel = vcat([x for x in 0:n-1], "s")
-  draw_graph(G, nodelabel)
-
-  println("FINDING SHORTEST PATH BETWEEN $s AND $(bitstring(Ss[j]))")
+  # nodelabel = vcat([x for x in 0:n-1], "s")
+  # draw_graph(G, nodelabel)
 
   # This BFS gives us the path [s, e_1, ..., e_k] of elements (0..n-1)
   return G, bfs(G, s, v -> d[v] == j)

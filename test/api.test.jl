@@ -1,6 +1,5 @@
 using Test
 using Graphs
-
 include("../src/api.jl")
 
 @testset "bfs" begin

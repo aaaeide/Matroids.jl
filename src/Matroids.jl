@@ -6,5 +6,6 @@ greet() = "A matroid /ˈmeɪtrɔɪd/ is a structure that abstracts and generaliz
 
 include("types.jl")
 include("kmc.jl")
+include("api.jl")
 
 end

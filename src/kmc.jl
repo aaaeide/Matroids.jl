@@ -1,5 +1,3 @@
-include("types.jl")
-
 """
 Knuth's matroid construction (1974). Generates a matroid in terms of its closed sets, given by the size of the universe n, a list of enlargements X and optionally the type T to use for set representation. T must have bitwidth >= n.
 """

@@ -1,7 +1,6 @@
 using Graphs
 using DataStructures
 
-include("types.jl")
 include("utils.jl")
 
 """
@@ -24,20 +23,78 @@ function rank(M::FullMatroid, S::Integer)
   end
 end
 
-function rank(M::FreeMatroid, S::Integer)
+function rank(_::FreeMatroid, S::Integer)
   return Base.count_ones(S)
 end
   
-function rank(M, S::Set) return rank(M, set_to_bits(S)) end
+function rank(M, S) return rank(M, set_to_bits(S)) end
+
+
+"""
+    function Δ(M, S, e)
+
+Returns the marginal gain of adding e to the set S, given the matroid M.
+
+0 ≤ e ≤ M.n-1
+"""
+function Δ(M, S, e)
+  return rank(M, S | 1<<e) - rank(M, S)
+end
+
+
+"""
+    function matroid_partition(Ms::Vector{Matroid})
+
+Partitions a set of elements into k subsets independent in the k given matroids Ms. The matroids are assumed to be over the same ground set E.
+
+Wants to create an "even" partition; will at each step enlarge the set Ss[i], where Ss[i] is not a basis and is of smallest cardinality among the sets in Ss.
+"""
+function matroid_partition(Ms::Vector{Matroid})
+  k = length(Ms); n = Ms[1].n
+
+  # Initially, all k subsets are empty, and the "pot" is full.
+  Ss = push!(zeros(UInt16, k), 2^n-1)
+  push!(Ms, FreeMatroid(n))
+  
+  # can_grow[i] == true iff Ss[i] is not a basis in Ms[i].
+  can_grow = trues(k)
+  while true in can_grow
+    # Find the index i of the first set of least cardinality.
+    smallest = n+1; i = -1
+    for p in 1:k if can_grow[p]
+      card = Base.count_ones(Ss[p])
+      if card < smallest
+        smallest = card; i = p
+      end
+    end end
+
+    Ss |> pb
+    readline()
+
+    G, d = exchange_graph(Ms, Ss, n)
+    path = find_transfer_path(G, d, Ms, Ss, n, i, k+1)
+    if path == false
+       can_grow[i] = false
+    else
+      transfer!(i, path, Ms, Ss, d, n)
+    end
+  end
+
+  popat!(Ms, k+1) # Cleanup.
+  return Ss
+end
+
 
 """
     exchange_graph(Ms::Array{KnuthMatroid}, sets::Array{Integer}, n::Integer)
 
-Constructs an exchange graph given an m-length array Ms of matroids over the same ground set E, and an m-length array Ss of subsets of E (represented as integers of at least n bits). Each element is assumed to be in exactly one set. Each set Ss[i] corresponds to the matroid Ms[i], with which the rank can be deduced.
+Constructs an exchange graph given an m-length array Ms of matroids over the same ground set E, and an m-length array Ss of subsets of E. Each set is represented as an integer of at least n bits, where a 1-bit at bit i denotes that the set contains the element i. Each element is assumed to be in exactly one set. Each set Ss[i] corresponds to the matroid Ms[i], with which the rank can be deduced.
 
-The exchange graph is a graph whose vertices are the elements of E, and contains the edge (i,j) iff rank_i(S_i - i + j) = rank_i(S_i), where S_i is the set that contains i and rank_i the rank function for the corresponding matroid. In other words, it contains an edge (i,j) if i can be replaced by j with no loss in rank.
+The exchange graph is a graph whose vertices are the elements of E, and contains the edge (i,j) iff rank_i(S_i - i + j) = rank_i(S_i), where S_i is the set that contains i and rank_i the rank function for the corresponding matroid. In other words, it contains an edge (i,j) iff i can be replaced by j with no loss in rank.
 
-Returns the exchange graph G and a dictionary d that maps between each element of E and the set in Ss that contains it.
+Returns the exchange graph G and a dictionary d that maps between each element of E and the set in Ss that contains it. 
+
+NB! Whereas the elements are the set {0, ..., n-1}, the nodes in the graph make up the set {1, ..., n}. That is, vertex v represents element v-1. This is because nodes are 1-indexed in Graphs.jl.
 """
 function exchange_graph(Ms, Ss, n::Integer)
   G = SimpleDiGraph{UInt8}(n)
@@ -61,54 +118,47 @@ function exchange_graph(Ms, Ss, n::Integer)
   return (G, d)
 end
 
+
 """
-    function Δ(M, S, e)
+    function find_transfer_path(G, d, Ms, Ss, i::Integer, j::Integer, n::Integer)
 
-Returns the marginal gain of adding e to the set S, given the matroid M.
+Accepts an m-length array Ms of matroids over a ground set E, an m-length array Ss of subsets of E, the size of the universe |E| = n, and indexes 0 <= i <= m, 0 <= j <= m. Finds the shortest **transfer path** between i and j.
 
-0 ≤ e ≤ M.n-1
+A transfer path is a path (s, e_1, ..., e_k) in the exchange graph G, such that 
+- Δ(Ms[i], Ss[i], e_1) = 1,
+- rank(Ms[x], Ss[x] - e_x + e_{x+1}) = rank(Ms[x], Ss[x]) for each x in 2:k-1.
 """
-function Δ(M, S, e)
-  return rank(M, S | 1<<e) - rank(M, S)
-end
-
-
-function find_transfer_path(Ms, Ss, i::Integer, j::Integer, n::Integer)
-  G, d = exchange_graph(Ms, Ss, n)
-
+function find_transfer_path(G, d, Ms, Ss, n::Integer, i::Integer, j::Integer)
   # Compute the set F_i of elements with positive marginal gain for i.
   # TODO: Remember this between iterations.
-  F_i = [e for e in vertices(G) if Δ(Ms[i], Ss[i], e-1) == 1]
+  F_i = [e for e in vertices(G) if Δ(Ms[i], Ss[i], e-1) == 1] 
   
   add_vertex!(G)
   s = last(vertices(G))
   for e in F_i add_edge!(G, s, e) end
-  
-  # nodelabel = vcat([x for x in 0:n-1], "s")
-  # draw_graph(G, nodelabel)
 
-  # This BFS gives us the path [s, e_1, ..., e_k] of elements (0..n-1)
-  return G, bfs(G, s, v -> d[v] == j)
+  # This BFS gives us the path [s, e_1, ..., e_k] of elements (0..n-1) or false.
+  return bfs(G, s, v -> d[v-1] == j)
 end
 
 
-function transfer!(i, path, Ms, Ss, d, n)
-  @assert path[1] == n+1 # The source node, not an element in E.
+function transfer!(i, p, Ms, Ss, d, n)
+  @assert p[1] == n+1 # The source node, not an element in E.
 
-  # Ss[i] receives path[2] for a marginal gain of 1.
-  Ss[i] |= 1<<path[2]
+  # Ss[i] receives p[2] for a marginal gain of 1.
+  Ss[i] |= 1<<(p[2]-1)
   
-  # For each path position j in 2:end-1, d[j] should lose path[j] and get path[j+1].
-  for j in 2:length(path)-1
+  # For each path position j in 2:end-1, d[j] should lose p[j] and get p[j+1].
+  for j in 2:length(p)-1
     r = rank(Ms[d[j]], Ss[d[j]])
-    Ss[d[j]] &= ~1<<path[j] # Lose an element.
-    Ss[d[j]] |= 1<<path[j+1] # Gain next element.
+    Ss[d[j]] &= ~1<<(p[j]-1) # Lose an element.
+    Ss[d[j]] |= 1<<(p[j+1]-1) # Gain next element.
     r´ = rank(Ms[d[j]], Ss[d[j]])
     @assert r == r´
   end
 
   # The last set simply loses an element.
-  Ss[d[path[end]]] &= ~1<<path[end]
+  Ss[d[p[end]-1]] &= ~1<<(p[end]-1)
 end
 
 """

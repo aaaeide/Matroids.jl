@@ -18,3 +18,5 @@ end
 struct FreeMatroid
   n::Integer
 end
+
+Matroid = Union{ClosedSetsMatroid, FullMatroid, FreeMatroid}

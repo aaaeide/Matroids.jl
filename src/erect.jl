@@ -224,15 +224,11 @@ function insert_set_v2!(x, F, I, r, rank)
   for y in F[r+1]
     if haskey(rank, x&y) && rank[x&y] < r continue end
 
-    # x&y has rank > r (not seen yet), replace x and y with x|y.
+    
     setdiff!(F[r+1], y)
     insert_set_v2!(x|y, F, I, r, rank)
     return
   end
-  
-  # x is a maximal dependent set, and contains some number of independent sets of rank = cardinality = r
-  # each closed set x gets here once, though some sets will get here that later get subsumed in a bigger set
-
   
   push!(F[r+1], x)
   c = Base.count_ones(x) # Find |x|.

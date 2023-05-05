@@ -34,8 +34,12 @@ function my_random_erection(n, p, T=UInt16)
     end
 
     if r <= length(p)
-      @assert Base.count_ones(s) > r "Rank cannot exceed cardinality!"
+      # Apply coarsening.
+      while p[r] > 0 && E ∉ R[r+1]
+        
+      end
       
+
       push!(R[r+1], s) # rank table add all subsets of rank r+1
     end
 

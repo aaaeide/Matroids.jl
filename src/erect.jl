@@ -75,7 +75,7 @@ Inserts set x into F[r+1], but augments x if it is necessary to ensure no two se
 """
 function insert_set!(x, F, r, rank)
   for y in F[r+1] # +1 since Julia is 1-indexed.
-    if rank[x&y] <= r
+    if rank[x&y] < r
       continue
     end
 

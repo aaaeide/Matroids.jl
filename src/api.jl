@@ -4,7 +4,32 @@ using DataStructures
 include("utils.jl")
 
 """
-    rank(M::KnuthMatroid, S::Integer)
+    function is_indep(M::ClosedSetsMatroid, S::Integer)
+
+Independence oracle. Determines efficiently whether a given set S is independent in the matroid M.
+"""
+function is_indep(M::ClosedSetsMatroid, S::Integer)
+  card = Base.count_ones(S)
+  if card > M.r return false end
+  
+  for C ∈ M.F[card+1]
+    if S&C == S return true end
+  end
+
+  return false
+end
+
+function is_indep(M::FullMatroid, S::Integer)
+  card = Base.count_ones(S)
+  return S in M.I[card+1]
+end
+
+function is_indep(M::UniformMatroid, S::Integer)
+  return Base.count_ones(S) <= M.r
+end
+
+"""
+    function rank(M::KnuthMatroid, S::Integer)
 
 Rank ``oracle''. Returns the rank of the set S in the matroid M.
 """
@@ -23,8 +48,8 @@ function rank(M::FullMatroid, S::Integer)
   end
 end
 
-function rank(_::FreeMatroid, S::Integer)
-  return Base.count_ones(S)
+function rank(M::UniformMatroid, S::Integer)
+  return min(Base.count_ones(S), M.r)
 end
   
 function rank(M, S) return rank(M, set_to_bits(S)) end

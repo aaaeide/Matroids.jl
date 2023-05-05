@@ -1,3 +1,5 @@
+include("types.jl")
+
 """
 Knuth's matroid construction (1974). Generates a matroid in terms of its closed sets, given by the size of the universe n, a list of enlargements X and optionally the type T to use for set representation. T must have bitwidth >= n.
 """
@@ -36,7 +38,7 @@ function random_knuth_matroid(n, p, T=UInt16)::ClosedSetsMatroid{T}
     r += 1
   end
 
-  return ClosedSetsMatroid{T}(n, r-1, F, rank, T)
+  return ClosedSetsMatroid{T}(n, r-1, F, rank, T) # , T)
 end
 
 """
@@ -76,6 +78,7 @@ function coarsen!(F, r, E, count, rank)
 end
 
 function add_set!(x, F, r, rank)
+  println("ADDING SET $(bitstring(x))")
   if x in F[r+1] return end
   for y in F[r+1]
     if haskey(rank, x&y) && rank[x&y]<r

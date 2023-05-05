@@ -13,10 +13,15 @@ struct FullMatroid{T}
   I::Vector{Set{T}} # Independent sets by rank
   C::Set{T} # Circuits
   rank::Dict{T, UInt8}
+  Type::DataType
 end
 
-struct FreeMatroid
+struct UniformMatroid
   n::Integer
+  r::Integer
 end
 
-Matroid = Union{ClosedSetsMatroid, FullMatroid, FreeMatroid}
+FreeMatroid(n) = UniformMatroid(n, n)
+
+
+Matroid = Union{ClosedSetsMatroid, FullMatroid, UniformMatroid}

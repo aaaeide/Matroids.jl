@@ -43,8 +43,9 @@ function experiments(kmc)
   println("----|---------------------|--------|--------|-----------|-----------------|---------")
 
   for test in tests
+    p = copy(test.p)
     (time, bytes, _, rank) = benchmark(kmc, test)
-    println("$(rpad(test.n, 4, " "))| $(rpad(test.p, 20, " "))| $(rpad(test.num, 7, " "))| $(rpad(rank, 7, " "))| $(rpad(time, 10, " "))| $(rpad(Base.format_bytes(bytes), 16))| $(test.T)")
+    println("$(rpad(test.n, 4, " "))| $(rpad(p, 20, " "))| $(rpad(test.num, 7, " "))| $(rpad(rank, 7, " "))| $(rpad(time, 10, " "))| $(rpad(Base.format_bytes(bytes), 16))| $(test.T)")
   end
 
 end

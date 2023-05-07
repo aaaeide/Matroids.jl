@@ -2,7 +2,7 @@ using Graphs, MetaGraphs, StatsBase
 
 include("utils.jl")
 
-function VERBOSE(thresh) thresh >= 1 end
+function VERBOSE(thresh) thresh >= 100 end
 function bst(x) bitstring(x)[1:end] end
 
 """
@@ -28,10 +28,34 @@ function my_random_erection(n, p, T=UInt16)
   # Each node is labeled with the bitstring of the set it represents.
   set_indexing_prop!(G, :label) 
 
-  function G_get(x) G[bitstring(x), :label] end
+  function G_get(x) 
+    try
+      G[bitstring(x), :label] 
+    catch
+      return nothing
+    end
+  end
+
   function G_set(x)
-    add_vertex!(G)
-    set_prop!(G, nv(G), :label, bitstring(x))
+    if G_get(x) === nothing
+      add_vertex!(G)
+      set_prop!(G, nv(G), :label, bitstring(x))
+      return true
+    end
+
+    return false
+  end
+
+  function G_neighbs(x)
+    if G_get(x) === nothing
+      return []
+    end
+
+    return neighbors(G, G_get(x))
+  end
+
+  function G_neighbs(xs...)
+    return reduce(vcat, [G_neighbs(x) for x in xs])
   end
 
 
@@ -40,8 +64,10 @@ function my_random_erection(n, p, T=UInt16)
       VERBOSE(2) && println("\n=== generating covers for $(bst(y)) ===")
       t = E-y
       for x in R[r+1]
+        VERBOSE(1) && print("\n\tcomparing with \t$(bst(x)) ")
         # Look for sets in R[r+1] that already contain y.
         if (x&y == y)
+          VERBOSE(1) && print("*")
           # Remove excess elements from t.
           t &= ~x
 
@@ -50,13 +76,15 @@ function my_random_erection(n, p, T=UInt16)
           
           if t == 0 break end
         end
+      end
+
+      VERBOSE(1) && println("\n\tadding all \t$(bst(t))")
         
-        # Insert y ∪ a for all a ∈ t.
-        while t > 0
-          x = y|(t&-t)
-          insert_set!(x, [G_get(y)])
-          t &= ~x
-        end
+      # Insert y ∪ a for all a ∈ t.
+      while t > 0
+        x = y|(t&-t)
+        insert_set!(x, [G_get(y)])
+        t &= ~x
       end
     end
   end
@@ -74,20 +102,20 @@ function my_random_erection(n, p, T=UInt16)
         throw(error("got rank > r"))
       end
 
-      parents = vcat(neighbors(G, G_get(x)), neighbors(G, G_get(y)))
+      # TODO: Crashes here
+      parents = G_neighbs(x, y)
       if check_rank(x&y, parents) < r
         continue
       end
 
       @label merge
-
       VERBOSE(2) && println("\t$(bst(x)) ∩ $(bst(y)) = $(bst(x&y)) has rank == $r")
       VERBOSE(2) && println("\treplacing with $(bst(x|y))")
 
       # x ∩ y has rank >= r, replace with x ∪ y.
       setdiff!(R[r+1], y)
-      parents = vcat(parents, neighbors(G, G_get(y)))
-      rem_vertex!(G, G_get(y))
+      parents = vcat(parents, G_neighbs(y))
+      # rem_vertex!(G, G_get(x)); rem_vertex!(G, G_get(y))
       insert_set!(x|y, parents)
     end
 
@@ -104,12 +132,12 @@ function my_random_erection(n, p, T=UInt16)
     # for a set y st. x ⊆ y. Returns the rank of y, or false.
     visited = Set()
     while length(fringe) > 0
+      y = parse(T, get_prop(G, popfirst!(fringe), :label), base=2)
       if y in visited continue end
 
-      y = get_prop(G, popfirst!(fringe), :label)
       if x&y == x return rank[y] end
       
-      fringe = vcat(fringe, neighbors(G, G_get(y)))
+      fringe = vcat(fringe, G_neighbs(y))
       push!(visited, y)
     end
 

@@ -3,7 +3,7 @@ using Graphs, MetaGraphs, StatsBase
 include("utils.jl")
 
 function VERBOSE(thresh) thresh >= 100 end
-function bst(x) bitstring(x)[1:end] end
+function bst(x) bitstring(x)[7:end] end
 
 """
     function my_random_erection(n, p, T=UInt16)
@@ -12,7 +12,8 @@ Erects a matroid in the same way that Knuth's 1974 matroid erection algorithm do
 
 n is |E|, p is the list where p[i] is the number of coarsenings (closed sets to increase by 1) at rank i+1. Sets are represented as binary numbers (ø = 0x0000, E = 0xffff when n=16).
 """
-function my_random_erection(n, p, T=UInt16)
+function my_random_erection(n, P, T=UInt16)
+  p = copy(P)
   r = 1
   E::T = big"2"^n-1
   
@@ -20,7 +21,7 @@ function my_random_erection(n, p, T=UInt16)
   R::Vector{Set{T}} = [Set()]
 
   # Keeps track of the rank of added closed sets.
-  rank = Dict{T, UInt8}()
+  rank = Dict{T, UInt8}(0=>0)
 
   # G contains the edge (X, Y) if X is a cover ("descendant") of Y. Then, X ⊇ Y.
   G = MetaDiGraph()
@@ -91,20 +92,25 @@ function my_random_erection(n, p, T=UInt16)
 
   function insert_set!(x, parents)
     VERBOSE(1) && readline()
-    VERBOSE(2) && print(" trying to add $(bst(x)) to rank $r")
-    VERBOSE(2) && if Base.count_ones(x) > r print(" (REDUNDANCE)\n") else print("\n") end
+    VERBOSE(2) && println(" trying to add $(bst(x)) to rank $r")
 
-    # We are trying to insert x as a closed set of rank r.
     for y in R[r+1] # (+1 due to 1-indexing)
       if haskey(rank, x&y)
-        if rank[x&y] < r continue end
+        if rank[x&y] < r 
+          VERBOSE(0) && println("\ttable ok ($(rank[x&y])): $(bst(y))")  
+          continue 
+        end
         if rank[x&y] == r @goto merge end
         throw(error("got rank > r"))
       end
 
-      # TODO: Crashes here
-      parents = G_neighbs(x, y)
-      if check_rank(x&y, parents) < r
+      if Base.count_ones(x&y) < r
+        VERBOSE(0) && println("\tcardinality ok: $(bst(y))")
+        continue
+      end
+
+      parents = vcat(parents, G_neighbs(y))
+      if check_rank(x&y, parents)
         continue
       end
 
@@ -117,6 +123,7 @@ function my_random_erection(n, p, T=UInt16)
       parents = vcat(parents, G_neighbs(y))
       # rem_vertex!(G, G_get(x)); rem_vertex!(G, G_get(y))
       insert_set!(x|y, parents)
+      return
     end
 
     VERBOSE(3) && println("\tadding $(bst(x)) to rank $r")
@@ -129,18 +136,23 @@ function my_random_erection(n, p, T=UInt16)
 
   function check_rank(x, fringe)
     # Runs a BFS, starting with the nodes of G in fringe, looking
-    # for a set y st. x ⊆ y. Returns the rank of y, or false.
+    # for a set y st. x ⊆ y. if x is contained in a closed set (of lower rank) return true, else false.
+    VERBOSE(0) && print("\tgraph check: $(bst(x))")
     visited = Set()
     while length(fringe) > 0
       y = parse(T, get_prop(G, popfirst!(fringe), :label), base=2)
       if y in visited continue end
 
-      if x&y == x return rank[y] end
+      if x&y == x 
+        VERBOSE(0) && print(" - ok ($(rank[y]))\n")
+        return true
+      end
       
       fringe = vcat(fringe, G_neighbs(y))
       push!(visited, y)
     end
 
+    VERBOSE(0) && print(" - not ok, merge\n")
     return false
   end
   
@@ -155,11 +167,18 @@ function my_random_erection(n, p, T=UInt16)
       # Generate a random set of cardinality r+1.
       VERBOSE(2) && println("\n********      coarsening      ********")
       x = reduce(|, [T(1<<(i-1)) for i in sample(1:n, r+1, replace=false)])
+
+      for set in R[r+1]
+        if x&set == x continue end
+      end
+
       insert_set!(x, [])
       p[r] -= 1
     end
 
-    # if E ∈ R[r] break end
+    VERBOSE(2) && println("\nnext rank.\nR[$(r+1)] = $(R[r+1])\n")
+
+    if E ∈ R[r] break end
     r += 1
   end
 

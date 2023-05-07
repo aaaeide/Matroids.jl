@@ -1,3 +1,5 @@
+using StatsBase
+
 include("types.jl")
 
 function VERBOSE(thresh) thresh >= 100 end
@@ -60,6 +62,8 @@ function random_knuth_matroid(n, p, T=UInt16, OVERRIDE=[])::ClosedSetsMatroid{T}
     else
       if r <= length(OVERRIDE) coarsen_exact!(F, r, OVERRIDE[r], add_function) end
     end
+
+    # if r <= length(p) weird_coarsen!(F, r, E, p[r], T, n, add_function) end
 
     r += 1
     VERBOSE(1) && readline()
@@ -148,10 +152,21 @@ function coarsen!(F, r, E, count, add_function, log=[])
 
     VERBOSE(2) && println("\n********      coarsening      ********")
     add_function(A|a)
-
+    
     push!(entry, (A, a))
   end
   push!(log, entry)
+end
+
+function weird_coarsen!(F, r, E, count, T, n, add_function)
+  for _ in 1:count
+    VERBOSE(2) && println("\n********   coarsening (weird)   ********")
+    x = reduce(|, [T(1<<(i-1)) for i in sample(1:n, r+1, replace=false)])
+    for set in F[r+1]
+      if x&set == x continue end
+    end
+    add_function(x)
+  end
 end
 
 function add_set!(x, F, r, rank, callback)

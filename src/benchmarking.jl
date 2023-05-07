@@ -36,8 +36,8 @@ function experiments(kmc)
     (n=13, p=[0,6,0], num=100, T=UInt16),
     (n=13, p=[0,6,2], num=100, T=UInt16),
     (n=16, p=[0,6,0], num=100, T=UInt16),
-    (n=16, p=[0,6,4], num=100, T=UInt16),
-    (n=32, p=[0,10,0], num=1, T=UInt32),
+    # (n=16, p=[0,6,4], num=100, T=UInt16),
+    # (n=32, p=[0,10,0], num=1, T=UInt32),
   ]
   println("n   | (p_1, p_2, ...)     | Trials | Rank   | Time      | Bytes allocated | T")
   println("----|---------------------|--------|--------|-----------|-----------------|---------")

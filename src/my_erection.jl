@@ -2,7 +2,7 @@ using Graphs, MetaGraphs, StatsBase
 
 include("utils.jl")
 
-function VERBOSE(thresh) thresh >= 100 end
+function VERBOS(thresh) thresh >= 1 end
 function bst(x) bitstring(x)[7:end] end
 
 """
@@ -12,7 +12,7 @@ Erects a matroid in the same way that Knuth's 1974 matroid erection algorithm do
 
 n is |E|, p is the list where p[i] is the number of coarsenings (closed sets to increase by 1) at rank i+1. Sets are represented as binary numbers (ø = 0x0000, E = 0xffff when n=16).
 """
-function my_random_erection(n, P, T=UInt16)
+function my_random_erection(n, P, T=UInt16, OVERRIDE=[])
   p = copy(P)
   r = 1
   E::T = big"2"^n-1
@@ -62,13 +62,13 @@ function my_random_erection(n, P, T=UInt16)
 
   function generate_covers!()
     for y in R[r]
-      VERBOSE(2) && println("\n=== generating covers for $(bst(y)) ===")
+      VERBOS(2) && println("\n=== generating covers for $(bst(y)) ===")
       t = E-y
       for x in R[r+1]
-        VERBOSE(1) && print("\n\tcomparing with \t$(bst(x)) ")
+        VERBOS(0) && print("\n\tcomparing with \t$(bst(x)) ")
         # Look for sets in R[r+1] that already contain y.
         if (x&y == y)
-          VERBOSE(1) && print("*")
+          VERBOS(0) && print("*")
           # Remove excess elements from t.
           t &= ~x
 
@@ -79,7 +79,7 @@ function my_random_erection(n, P, T=UInt16)
         end
       end
 
-      VERBOSE(1) && println("\n\tadding all \t$(bst(t))")
+      VERBOS(1) && println("\n\tadding all \t$(bst(t))\n")
         
       # Insert y ∪ a for all a ∈ t.
       while t > 0
@@ -91,13 +91,13 @@ function my_random_erection(n, P, T=UInt16)
   end
 
   function insert_set!(x, parents)
-    VERBOSE(1) && readline()
-    VERBOSE(2) && println(" trying to add $(bst(x)) to rank $r")
+    VERBOS(1) && readline()
+    VERBOS(2) && println(" trying to add $(bst(x)) to rank $r")
 
     for y in R[r+1] # (+1 due to 1-indexing)
       if haskey(rank, x&y)
         if rank[x&y] < r 
-          VERBOSE(0) && println("\ttable ok ($(rank[x&y])): $(bst(y))")  
+          VERBOS(0) && println("\ttable ok ($(rank[x&y])): $(bst(y))")  
           continue 
         end
         if rank[x&y] == r @goto merge end
@@ -105,7 +105,7 @@ function my_random_erection(n, P, T=UInt16)
       end
 
       if Base.count_ones(x&y) < r
-        VERBOSE(0) && println("\tcardinality ok: $(bst(y))")
+        VERBOS(0) && println("\tcardinality ok: $(bst(y))")
         continue
       end
 
@@ -115,8 +115,8 @@ function my_random_erection(n, P, T=UInt16)
       end
 
       @label merge
-      VERBOSE(2) && println("\t$(bst(x)) ∩ $(bst(y)) = $(bst(x&y)) has rank == $r")
-      VERBOSE(2) && println("\treplacing with $(bst(x|y))")
+      VERBOS(2) && println("\t$(bst(x)) ∩ $(bst(y)) = $(bst(x&y)) has rank == $r")
+      VERBOS(2) && println("\treplacing with $(bst(x|y))")
 
       # x ∩ y has rank >= r, replace with x ∪ y.
       setdiff!(R[r+1], y)
@@ -126,7 +126,7 @@ function my_random_erection(n, P, T=UInt16)
       return
     end
 
-    VERBOSE(3) && println("\tadding $(bst(x)) to rank $r")
+    VERBOS(3) && println("\tadding $(bst(x)) to rank $r")
 
     push!(R[r+1], x)
     rank[x] = r
@@ -137,14 +137,14 @@ function my_random_erection(n, P, T=UInt16)
   function check_rank(x, fringe)
     # Runs a BFS, starting with the nodes of G in fringe, looking
     # for a set y st. x ⊆ y. if x is contained in a closed set (of lower rank) return true, else false.
-    VERBOSE(0) && print("\tgraph check: $(bst(x))")
+    VERBOS(0) && print("\tgraph check: $(bst(x))")
     visited = Set()
     while length(fringe) > 0
       y = parse(T, get_prop(G, popfirst!(fringe), :label), base=2)
       if y in visited continue end
 
       if x&y == x 
-        VERBOSE(0) && print(" - ok ($(rank[y]))\n")
+        VERBOS(0) && print(" - ok ($(rank[y]))\n")
         return true
       end
       
@@ -152,7 +152,7 @@ function my_random_erection(n, P, T=UInt16)
       push!(visited, y)
     end
 
-    VERBOSE(0) && print(" - not ok, merge\n")
+    VERBOS(0) && print(" - not ok, merge\n")
     return false
   end
   
@@ -162,25 +162,33 @@ function my_random_erection(n, P, T=UInt16)
     push!(R, Set())
     generate_covers!()
 
-    # Apply coarsening.
-    while r <= length(p) && p[r] > 0 && E ∉ R[r+1]
-      # Generate a random set of cardinality r+1.
-      VERBOSE(2) && println("\n********      coarsening      ********")
-      x = reduce(|, [T(1<<(i-1)) for i in sample(1:n, r+1, replace=false)])
-
-      for set in R[r+1]
-        if x&set == x continue end
+    if length(OVERRIDE) > 0
+      if r < length(OVERRIDE)
+        for (A,a) in OVERRIDE[r]
+          insert_set!(A|a, [])
+        end
       end
-
-      insert_set!(x, [])
-      p[r] -= 1
+    else
+      # Apply coarsening.
+      while r <= length(p) && p[r] > 0 && E ∉ R[r+1]
+        # Generate a random set of cardinality r+1.
+        VERBOS(2) && println("\n********      coarsening      ********")
+        x = reduce(|, [T(1<<(i-1)) for i in sample(1:n, r+1, replace=false)])
+        
+        for set in R[r]
+          if x&set == x continue end
+        end
+        
+        insert_set!(x, [])
+        p[r] -= 1
+      end 
     end
-
-    VERBOSE(2) && println("\nnext rank.\nR[$(r+1)] = $(R[r+1])\n")
+      
+    VERBOS(2) && println("\nnext rank.\nR[$(r+1)] = $(R[r+1])\n")
 
     if E ∈ R[r] break end
     r += 1
   end
 
-  return (n=n, r=r-1, R=R)
+  return (n=n, r=r-1, R=R, G=G)
 end

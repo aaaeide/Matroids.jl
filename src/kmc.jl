@@ -2,8 +2,8 @@ using StatsBase
 
 include("types.jl")
 
-function VERBOSE(thresh) thresh >= 100 end
-function bst(x) bitstring(x)[1:end] end
+function VERBOSE(thresh) thresh >= 0 end
+function bst(x) bitstring(x)[7:end] end
 
 """
 Knuth's matroid construction (1974). Generates a matroid in terms of its closed sets, given by the size of the universe n, a list of enlargements X and optionally the type T to use for set representation. T must have bitwidth >= n.
@@ -57,13 +57,15 @@ function random_knuth_matroid(n, p, T=UInt16, OVERRIDE=[])::ClosedSetsMatroid{T}
     generate_covers!(F, r, E, add_function)
 
     # Perform coarsening.
-    if length(OVERRIDE) == 0
-      if r <= length(p) coarsen!(F, r, E, p[r], add_function) end
-    else
-      if r <= length(OVERRIDE) coarsen_exact!(F, r, OVERRIDE[r], add_function) end
-    end
+    # if length(OVERRIDE) == 0
+    #   if r <= length(p) coarsen!(F, r, E, p[r], add_function) end
+    # else
+    #   if r <= length(OVERRIDE) coarsen_exact!(F, r, OVERRIDE[r], add_function) end
+    # end
 
     # if r <= length(p) weird_coarsen!(F, r, E, p[r], T, n, add_function) end
+
+    if r <= length(p) user_coarsen!(F, r, E, p[r], T, add_function) end
 
     r += 1
     VERBOSE(1) && readline()
@@ -123,7 +125,7 @@ Generates minimal closed sets for rank r+1 and inserts them into F[r+1], using t
 """
 function generate_covers!(F, r, E, insert_fn)
   for y in F[r]
-    VERBOSE(2) && println("\n=== generating covers for $(bst(y)) ===")
+    VERBOSE(3) && Base.count_ones(y) > r && println("\n=== generating covers for $(bst(y)) ===")
     t = E - y
     # Find all sets in F[r+1] that already contain y and remove excess elements from t.
     for x in F[r+1]
@@ -150,7 +152,7 @@ function coarsen!(F, r, E, count, add_function, log=[])
     a = convert(typeof(A), a)
     setdiff!(F[r+1], A)
 
-    VERBOSE(2) && println("\n********      coarsening      ********")
+    VERBOSE(3) && println("\n********      coarsening      ********")
     add_function(A|a)
     
     push!(entry, (A, a))
@@ -160,7 +162,7 @@ end
 
 function weird_coarsen!(F, r, E, count, T, n, add_function)
   for _ in 1:count
-    VERBOSE(2) && println("\n********   coarsening (weird)   ********")
+    VERBOSE(3) && println("\n********   coarsening (weird)   ********")
     x = reduce(|, [T(1<<(i-1)) for i in sample(1:n, r+1, replace=false)])
     for set in F[r+1]
       if x&set == x continue end
@@ -169,10 +171,27 @@ function weird_coarsen!(F, r, E, count, T, n, add_function)
   end
 end
 
+function user_coarsen!(F, r, E, count, T, add_function)
+  for _ in 1:count
+    readline()
+    readline()
+    readline()
+    readline()
+    readline()
+    readline()
+    print("\nCOARSENING - SUPPLY SET TO ADD: ")
+    str = readline()
+    set = parse(T, str, base=2)
+    add_function(set)
+  end
+end
+
 function add_set!(x, F, r, rank, callback)
-  VERBOSE(1) && readline()
-  VERBOSE(2) && print(" trying to add $(bst(x)) to rank $r")
-  VERBOSE(2) && if Base.count_ones(x) > r print(" (REDUNDANCE)\n") else print("\n") end
+  
+  verb = VERBOSE(3) && Base.count_ones(x) > r
+  verb && readline()
+  verb && println(" trying to add $(bst(x)) to rank $r")
+
   for y in F[r+1]
   
     """
@@ -192,16 +211,16 @@ function add_set!(x, F, r, rank, callback)
     """
 
     if haskey(rank, x&y) && rank[x&y]<r
-      VERBOSE(0) && println("\ttable ok ($(rank[x&y])): $(bst(y))")
+      # verb && println("\ttable ok ($(rank[x&y])): $(bst(y))")
       continue
     end
 
     if !haskey(rank, x&y)
       if Base.count_ones(x&y) < r
-        VERBOSE(0) && println("\tcardinality ok: $(bst(y))")
+        # verb && println("\tcardinality ok: $(bst(y))")
         continue
       else
-        VERBOSE(4) && println("\tBAD CARDINALITY: $(bst(x&y)) - CHECKING...")
+        verb && println("\tBAD CARDINALITY: $(bst(x&y)) - CHECKING...")
       
         r´ = check_rank(x&y, r, F)
         if r´ !== false
@@ -211,8 +230,8 @@ function add_set!(x, F, r, rank, callback)
       end
     end
 
-    VERBOSE(2) && println("\t$(bst(x)) ∩ $(bst(y)) = $(bst(x&y)) has rank == $r")
-    VERBOSE(2) && println("\treplacing with $(bst(x|y))")
+    verb && println("\t$(bst(x)) ∩ $(bst(y)) = $(bst(x&y)) has rank == $r")
+    verb && println("\treplacing with $(bst(x|y))")
 
     # x ∩ y has rank > r, replace with x ∪ y.
     setdiff!(F[r+1], y)
@@ -220,7 +239,7 @@ function add_set!(x, F, r, rank, callback)
     return
   end
 
-  VERBOSE(3) && println("\tadding $(bst(x)) to rank $r")
+  verb && println("\tadding $(bst(x)) to rank $r")
 
   push!(F[r+1], x)
   callback(x)

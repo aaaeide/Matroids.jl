@@ -25,6 +25,7 @@ end
 
 function experiments(kmc)
   tests = [
+    (n=8, p=[0,1,1], num=100, T=UInt16),
     (n=10, p=[0,6,0], num=100, T=UInt16),
     (n=10, p=[0,5,1], num=100, T=UInt16),
     (n=10, p=[0,5,2], num=100, T=UInt16),

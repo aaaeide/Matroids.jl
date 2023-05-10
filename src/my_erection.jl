@@ -2,8 +2,8 @@ using Graphs, MetaGraphs, StatsBase
 
 include("utils.jl")
 
-function VERBOS(thresh) thresh >= 1 end
-function bst(x) bitstring(x)[7:end] end
+function VERBOS(thresh) thresh >= 100 end
+function bst(x) bitstring(x)[1:end] end
 
 """
     function my_random_erection(n, p, T=UInt16)
@@ -16,6 +16,8 @@ function my_random_erection(n, P, T=UInt16, OVERRIDE=[])
   p = copy(P)
   r = 1
   E::T = big"2"^n-1
+
+  log = []
   
   # R[i] is the set of closed-but-not-independent (redundant) sets of rank i.
   R::Vector{Set{T}} = [Set()]
@@ -23,41 +25,41 @@ function my_random_erection(n, P, T=UInt16, OVERRIDE=[])
   # Keeps track of the rank of added closed sets.
   rank = Dict{T, UInt8}(0=>0)
 
-  # G contains the edge (X, Y) if X is a cover ("descendant") of Y. Then, X ⊇ Y.
-  G = MetaDiGraph()
+  # # G contains the edge (X, Y) if X is a cover ("descendant") of Y. Then, X ⊇ Y.
+  # G = MetaDiGraph()
 
-  # Each node is labeled with the bitstring of the set it represents.
-  set_indexing_prop!(G, :label) 
+  # # Each node is labeled with the bitstring of the set it represents.
+  # set_indexing_prop!(G, :label) 
 
-  function G_get(x) 
-    try
-      G[bitstring(x), :label] 
-    catch
-      return nothing
-    end
-  end
+  # function G_get(x) 
+  #   try
+  #     G[bitstring(x), :label] 
+  #   catch
+  #     return nothing
+  #   end
+  # end
 
-  function G_set(x)
-    if G_get(x) === nothing
-      add_vertex!(G)
-      set_prop!(G, nv(G), :label, bitstring(x))
-      return true
-    end
+  # function G_set(x)
+  #   if G_get(x) === nothing
+  #     add_vertex!(G)
+  #     set_prop!(G, nv(G), :label, bitstring(x))
+  #     return true
+  #   end
 
-    return false
-  end
+  #   return false
+  # end
 
-  function G_neighbs(x)
-    if G_get(x) === nothing
-      return []
-    end
+  # function G_neighbs(x)
+  #   if G_get(x) === nothing
+  #     return []
+  #   end
 
-    return neighbors(G, G_get(x))
-  end
+  #   return neighbors(G, G_get(x))
+  # end
 
-  function G_neighbs(xs...)
-    return reduce(vcat, [G_neighbs(x) for x in xs])
-  end
+  # function G_neighbs(xs...)
+  #   return reduce(vcat, [G_neighbs(x) for x in xs])
+  # end
 
 
   function generate_covers!()
@@ -73,7 +75,7 @@ function my_random_erection(n, P, T=UInt16, OVERRIDE=[])
           t &= ~x
 
           # Add edge (x, y) to remember that x ⊇ y.
-          add_edge!(G, (G_get(x), G_get(y)))
+          # add_edge!(G, (G_get(x), G_get(y)))
           
           if t == 0 break end
         end
@@ -84,20 +86,20 @@ function my_random_erection(n, P, T=UInt16, OVERRIDE=[])
       # Insert y ∪ a for all a ∈ t.
       while t > 0
         x = y|(t&-t)
-        insert_set!(x, [G_get(y)])
+        insert_set!(x)#, [G_get(y)])
         t &= ~x
       end
     end
   end
 
-  function insert_set!(x, parents)
+  function insert_set!(x)#, parents)
     VERBOS(1) && readline()
     VERBOS(2) && println(" trying to add $(bst(x)) to rank $r")
 
     for y in R[r+1] # (+1 due to 1-indexing)
       if haskey(rank, x&y)
         if rank[x&y] < r 
-          VERBOS(0) && println("\ttable ok ($(rank[x&y])): $(bst(y))")  
+          VERBOS(0) && println("\ttable ok ($(rank[x&y])): $(bst(y))")
           continue 
         end
         if rank[x&y] == r @goto merge end
@@ -109,10 +111,13 @@ function my_random_erection(n, P, T=UInt16, OVERRIDE=[])
         continue
       end
 
-      parents = vcat(parents, G_neighbs(y))
-      if check_rank(x&y, parents)
-        continue
-      end
+      # parents = vcat(parents, G_neighbs(y))
+      # if check_rank(x&y, parents)
+      #   VERBOS(0) && println("RANK CHECK FIRE")
+      #   continue
+      # end
+
+      if check_rank(x&y, r) continue end
 
       @label merge
       VERBOS(2) && println("\t$(bst(x)) ∩ $(bst(y)) = $(bst(x&y)) has rank == $r")
@@ -120,9 +125,9 @@ function my_random_erection(n, P, T=UInt16, OVERRIDE=[])
 
       # x ∩ y has rank >= r, replace with x ∪ y.
       setdiff!(R[r+1], y)
-      parents = vcat(parents, G_neighbs(y))
+      # parents = vcat(parents, G_neighbs(y))
       # rem_vertex!(G, G_get(x)); rem_vertex!(G, G_get(y))
-      insert_set!(x|y, parents)
+      insert_set!(x|y)#, parents)
       return
     end
 
@@ -130,29 +135,42 @@ function my_random_erection(n, P, T=UInt16, OVERRIDE=[])
 
     push!(R[r+1], x)
     rank[x] = r
-    G_set(x)
-    for p in parents add_edge!(G, (G_get(x), p)) end
+    # G_set(x)
+    # for p in parents add_edge!(G, (G_get(x), p)) end
   end
 
-  function check_rank(x, fringe)
-    # Runs a BFS, starting with the nodes of G in fringe, looking
-    # for a set y st. x ⊆ y. if x is contained in a closed set (of lower rank) return true, else false.
-    VERBOS(0) && print("\tgraph check: $(bst(x))")
-    visited = Set()
-    while length(fringe) > 0
-      y = parse(T, get_prop(G, popfirst!(fringe), :label), base=2)
-      if y in visited continue end
+  # function check_rank(x, fringe)
+  #   # Runs a BFS, starting with the nodes of G in fringe, looking
+  #   # for a set y st. x ⊆ y. if x is contained in a closed set (of lower rank) return true, else false.
+  #   VERBOS(1) && print("\tgraph check: $(bst(x))")
+  #   visited = Set()
+  #   while length(fringe) > 0
+  #     y = parse(T, get_prop(G, popfirst!(fringe), :label), base=2)
+  #     if y in visited continue end
 
-      if x&y == x 
-        VERBOS(0) && print(" - ok ($(rank[y]))\n")
-        return true
-      end
+  #     VERBOS(0) && print("\n\t\t     $(bst(y))")
+
+  #     if x&y == x 
+  #       VERBOS(1) && print(" - ok ($(rank[y]))\n")
+  #       return true
+  #     end
       
-      fringe = vcat(fringe, G_neighbs(y))
-      push!(visited, y)
-    end
+  #     fringe = vcat(fringe, G_neighbs(y))
+  #     push!(visited, y)
+  #   end
 
-    VERBOS(0) && print(" - not ok, merge\n")
+  #   VERBOS(1) && print(" - not ok, merge\n")
+  #   return false
+  # end
+
+  function check_rank(x, r)
+    # Checks all sets z in R[r]. Returns true if one exists st z ⊆ x.
+    for z in R[r]
+      if x&z == x 
+        VERBOS(0) && println("\tmanual check ok: $(bst(y))")
+        return true 
+      end
+    end
     return false
   end
   
@@ -164,12 +182,13 @@ function my_random_erection(n, P, T=UInt16, OVERRIDE=[])
 
     if length(OVERRIDE) > 0
       if r < length(OVERRIDE)
-        for (A,a) in OVERRIDE[r]
-          insert_set!(A|a, [])
+        for set in OVERRIDE[r]
+          insert_set!(set)#, [])
         end
       end
     else
       # Apply coarsening.
+      push!(log, [])
       while r <= length(p) && p[r] > 0 && E ∉ R[r+1]
         # Generate a random set of cardinality r+1.
         VERBOS(2) && println("\n********      coarsening      ********")
@@ -178,17 +197,20 @@ function my_random_erection(n, P, T=UInt16, OVERRIDE=[])
         for set in R[r]
           if x&set == x continue end
         end
+
+        push!(log[r], x)
         
-        insert_set!(x, [])
+        insert_set!(x)#, [])
         p[r] -= 1
       end 
     end
       
-    VERBOS(2) && println("\nnext rank.\nR[$(r+1)] = $(R[r+1])\n")
+    VERBOS(2) && println("\nnext rank.")#\nR[$(r+1)] = $(R[r+1])\n")
 
     if E ∈ R[r] break end
     r += 1
   end
 
-  return (n=n, r=r-1, R=R, G=G)
+  # println(log)
+  return (n=n, r=r-1, R=R)#, G=G)
 end

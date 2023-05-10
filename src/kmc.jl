@@ -2,8 +2,8 @@ using StatsBase
 
 include("types.jl")
 
-function VERBOSE(thresh) thresh >= 0 end
-function bst(x) bitstring(x)[7:end] end
+function VERBOSE(thresh) thresh >= 100 end
+function bst(x) bitstring(x)[1:end] end
 
 """
 Knuth's matroid construction (1974). Generates a matroid in terms of its closed sets, given by the size of the universe n, a list of enlargements X and optionally the type T to use for set representation. T must have bitwidth >= n.
@@ -57,15 +57,15 @@ function random_knuth_matroid(n, p, T=UInt16, OVERRIDE=[])::ClosedSetsMatroid{T}
     generate_covers!(F, r, E, add_function)
 
     # Perform coarsening.
-    # if length(OVERRIDE) == 0
-    #   if r <= length(p) coarsen!(F, r, E, p[r], add_function) end
-    # else
-    #   if r <= length(OVERRIDE) coarsen_exact!(F, r, OVERRIDE[r], add_function) end
-    # end
+    if length(OVERRIDE) == 0
+      # if r <= length(p) coarsen!(F, r, E, p[r], add_function) end
+      if r <= length(p) weird_coarsen!(F, r, E, p[r], T, n, add_function) end
+    else
+      if r <= length(OVERRIDE) coarsen_exact!(F, r, OVERRIDE[r], add_function) end
+    end
 
-    # if r <= length(p) weird_coarsen!(F, r, E, p[r], T, n, add_function) end
 
-    if r <= length(p) user_coarsen!(F, r, E, p[r], T, add_function) end
+    # if r <= length(p) user_coarsen!(F, r, E, p[r], T, add_function) end
 
     r += 1
     VERBOSE(1) && readline()
@@ -112,11 +112,11 @@ function random_erect(n, p, T=UInt16, OVERRIDE=[])::FullMatroid{T}
   return FullMatroid{T}(n, r-1, F, I, Set(), rank, T)
 end
 
-function coarsen_exact!(F, r, Aas, add_fn)
-  for (A, a) in Aas
+function coarsen_exact!(F, r, sets, add_fn)
+  for set in sets
     VERBOSE(2) && println("\n********  coarsening (exact)  ********")
-    setdiff!(F[r+1], A)
-    add_fn(A|a)
+    # setdiff!(F[r+1], A)
+    add_fn(set)
   end
 end
 

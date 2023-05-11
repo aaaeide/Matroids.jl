@@ -13,8 +13,6 @@ function my_random_erection(n, P, T=UInt16, OVERRIDE=[])
   p = copy(P)
   r = 1
   E::T = big"2"^n-1
-
-  log = []
   
   # R[i] is the set of closed-but-not-independent (redundant) sets of rank i.
   R::Vector{Set{T}} = [Set()]
@@ -84,9 +82,8 @@ function my_random_erection(n, P, T=UInt16, OVERRIDE=[])
     # Redundant sets of rank r+1 will go here.
     push!(R, Set())
     generate_covers!()
-
+    
     # Apply coarsening.
-    push!(log, [])
     while r <= length(p) && p[r] > 0 && E ∉ R[r+1]
       # Generate a random set of cardinality r+1.
       x = reduce(|, [T(1<<(i-1)) for i in sample(1:n, r+1, replace=false)])
@@ -94,17 +91,15 @@ function my_random_erection(n, P, T=UInt16, OVERRIDE=[])
       for set in R[r]
         if x&set == x continue end
       end
-
-      push!(log[r], x)
       
-      insert_set!(x)#, [])
+      insert_set!(x)
       p[r] -= 1
     end 
-      
+    
+    # println(r, " ", length(R[r]))
     if E ∈ R[r] break end
     r += 1
   end
 
-  # println(log)
-  return (n=n, r=r-1, R=R)#, G=G)
+  return (n=n, r=r-1, R=R)
 end

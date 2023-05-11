@@ -1,8 +1,10 @@
+using BenchmarkTools
+
 function avg(arr)
   return sum(arr) / length(arr)
 end
 
-function benchmark(kmc, test)
+function experiment(kmc, test)
   times = []
   bytes = []
   gctimes = []
@@ -18,38 +20,96 @@ function benchmark(kmc, test)
   t = round(avg(times), digits=7)
   b = floor(Int, avg(bytes))
   g = round(avg(gctimes), digits=7)
-  r = round(avg(ranks), digits=7)
+  r = round(avg(ranks), digits=4)
 
   return (t,b,g,r)
 end
 
 function experiments(kmc)
   tests = [
-    (n=8, p=[0,1,1], num=100, T=UInt16),
-    (n=10, p=[0,6,0], num=100, T=UInt16),
-    (n=10, p=[0,5,1], num=100, T=UInt16),
-    (n=10, p=[0,5,2], num=100, T=UInt16),
-    (n=10, p=[0,6,1], num=100, T=UInt16),
-    (n=10, p=[0,4,2], num=100, T=UInt16),
-    (n=10, p=[0,3,3], num=100, T=UInt16),
-    (n=10, p=[0,0,6], num=100, T=UInt16),
+    (n=8,  p=[0,1,0],   num=100, T=UInt16),
+    (n=10, p=[0,6,0],   num=100, T=UInt16),
+    (n=10, p=[0,4,2],   num=100, T=UInt16),
+    (n=10, p=[0,0,6],   num=100, T=UInt16),
     (n=10, p=[0,1,1,1], num=100, T=UInt16),
-    (n=13, p=[0,6,0], num=100, T=UInt16),
-    (n=13, p=[0,6,2], num=100, T=UInt16),
-    (n=16, p=[0,6,0], num=100, T=UInt16),
-    # (n=16, p=[0,6,4], num=100, T=UInt16),
-    # (n=32, p=[0,10,0], num=1, T=UInt32),
+    (n=13, p=[0,8,0],   num=75,  T=UInt16),
+    (n=13, p=[0,5,3],   num=75,  T=UInt16),
+    (n=13, p=[0,0,8],   num=75,  T=UInt16),
+    (n=16, p=[0,10,0],  num=50,  T=UInt16),
+    (n=16, p=[0,6,4],   num=50,  T=UInt16),
+    (n=16, p=[0,0,10],  num=50,  T=UInt16),
+    (n=24, p=[0,14,0],  num=25,  T=UInt32),
+    (n=24, p=[0,11,3],  num=25,  T=UInt32),
+    (n=24, p=[0,0,14],  num=25,  T=UInt32),
+    (n=32, p=[0,19,0],  num=10,  T=UInt32),
+    (n=32, p=[0,14,5],  num=10,  T=UInt32),
+    (n=32, p=[0,0,19],  num=10,  T=UInt32),
   ]
   println("n   | (p_1, p_2, ...)     | Trials | Rank   | Time      | Bytes allocated | T")
   println("----|---------------------|--------|--------|-----------|-----------------|---------")
-
+  
   for test in tests
     p = copy(test.p)
-    (time, bytes, _, rank) = benchmark(kmc, test)
+    (time, bytes, _, rank) = experiment(kmc, test)
     println("$(rpad(test.n, 4, " "))| $(rpad(p, 20, " "))| $(rpad(test.num, 7, " "))| $(rpad(rank, 7, " "))| $(rpad(time, 10, " "))| $(rpad(Base.format_bytes(bytes), 16))| $(test.T)")
   end
-
 end
+
+
+
+
+
+function benchmark_erect()
+  tests = [
+    (n=8,  p=[0,4,0],   T=UInt16),
+    (n=10, p=[0,6,0],   T=UInt16),
+    (n=10, p=[0,4,2],   T=UInt16),
+    (n=10, p=[0,0,6],   T=UInt16),
+    (n=10, p=[0,1,1,1], T=UInt16),
+    (n=13, p=[0,8,0],   T=UInt16),
+    (n=13, p=[0,5,3],   T=UInt16),
+    (n=13, p=[0,0,8],   T=UInt16),
+    (n=16, p=[0,10,0],  T=UInt16),
+    (n=16, p=[0,6,4],   T=UInt16),
+    (n=16, p=[0,0,10],  T=UInt16),
+    (n=24, p=[0,14,0],  T=UInt16),
+    (n=24, p=[0,10,4],  T=UInt16),
+    (n=24, p=[0,0,14],  T=UInt16),
+    (n=32, p=[0,19,0],  T=UInt32),
+    (n=32, p=[0,14,5],  T=UInt32),
+    (n=32, p=[0,0,19],  T=UInt32),
+  ]
+    
+  println("n   | (p_1, p_2, ...)     | Trials | Time (s)  | Bytes allocated | GC time")
+  println("----|---------------------|--------|-----------|-----------------|---------")
+
+  for test in tests 
+    p = copy(test.p)
+    expr = :( @benchmark my_random_erection($(test.n), $p, $(test.T)) seconds=600 )
+    b = eval(expr)
+
+    time = median(b).time
+    if time > 1e9
+      time = "$(round(time / 1e9, digits=4))s"
+    elseif time > 1e6
+      time = "$(round(time / 1e6, digits=4))ms"
+    elseif time > 1e3
+      time = "$(round(time / 1e3, digits=4))µs"
+    else
+      time = "$(round(time, digits=4))ns"
+    end
+
+    bytes = Base.format_bytes(median(b).memory)
+    gc = round(median(b).gctime / median(b).time, digits=2)
+    trials = length(b.times)
+
+
+    println("$(rpad(test.n, 4, " "))| $(rpad(p, 20, " "))| $(rpad(trials, 7, " "))| $(rpad(time, 10, " "))| $(rpad(bytes, 16))| $gc%")
+  end
+end
+
+
+
 
 function generate_benchmark_table_kmc(kmc)
   tests = [
@@ -79,7 +139,7 @@ function generate_benchmark_table_kmc(kmc)
   println("----|---------------------|--------|-----------|-----------|-----------------|---------")
 
   for test in tests
-    (time, bytes, gctime) = benchmark(kmc, test.t, test.n, test.p, test.T)
+    (time, bytes, gctime) = experiment(kmc, test.t, test.n, test.p, test.T)
     println("$(rpad(test.n, 4, " "))| $(rpad(test.p, 20, " "))| $(rpad(test.t, 7, " "))| $(rpad(time, 10, " "))| $(rpad(gctime, 10, " "))| $(rpad(Base.format_bytes(bytes), 16))| $(test.T)")
   end
 

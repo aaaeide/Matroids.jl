@@ -5,11 +5,11 @@ An improved version of KMC we are also finding the independent sets and circuits
 
 This version assigns the Hamming weight of all subsets of E upfront. This is infeasible for values of n much larger than 16.
 """
-function erect_v1(n, enlargements)::FullMatroid{UInt16}
+function erect_v1(n, enlargements, T=UInt16)
   # Initialize.
   r = 1
   mask = 2^n-1
-  rank = Dict{UInt16, UInt8}()
+  rank = Dict{T, UInt8}()
   
   # Populate rank table with 100+cardinality for all subsets of E.
   k=1; rank[0]=100;
@@ -61,13 +61,13 @@ function erect_v1(n, enlargements)::FullMatroid{UInt16}
   k = 1
   while k <= mask
     for i in 0:k-1 if rank[k+i] == rank[i]
-      push!(C, UInt16(k+i))
+      push!(C, T(k+i))
       unmark!(k+i, rank[i]+101, rank, mask)
     end end
     k += k
   end
 
-  return FullMatroid{UInt16}(n,r-1,F,I,C,rank, UInt16)
+  return FullMatroid{T}(n,r-1,F,I,C,rank, T)
 end
 
 """

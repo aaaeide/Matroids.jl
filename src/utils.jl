@@ -35,6 +35,12 @@ function slimmest_uint(n)
   return UInt128
 end
 
+
+function rand_el(S::Integer)
+  x = rand([2^(i-1) for (i,c) in enumerate(reverse(bitstring(S))) if c == '1'])
+  return convert(typeof(S), x)
+end
+
 # # Drawing graphs
 # using GraphPlot
 # using Compose

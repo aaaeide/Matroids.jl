@@ -59,7 +59,7 @@ function random_knuth_matroid(n, p, T=UInt16, OVERRIDE=[])::ClosedSetsMatroid{T}
     # Perform coarsening.
     if length(OVERRIDE) == 0
       # if r <= length(p) coarsen!(F, r, E, p[r], add_function) end
-      if r <= length(p) weird_coarsen!(F, r, E, p[r], T, n, add_function) end
+      if r <= length(p) coarsen!(F, r, E, p[r], add_function) end
     else
       if r <= length(OVERRIDE) coarsen_exact!(F, r, OVERRIDE[r], add_function) end
     end

@@ -50,7 +50,7 @@ function my_random_erection(n, P, T=UInt16, OVERRIDE=[])
 
       if Base.count_ones(x&y) < r continue end
 
-      if find_rank(x&y, r, rank) != false continue end
+      if find_rank(x&y, r) continue end
 
       @label merge
       # x ∩ y has rank >= r, replace with x ∪ y.
@@ -63,15 +63,11 @@ function my_random_erection(n, P, T=UInt16, OVERRIDE=[])
     rank[x] = r
   end
 
-  function find_rank(x, r, memo)
+  function find_rank(x, r)
     # Checks all sets z in R[1:r]. Returns true if one exists st z ⊆ x.
-    if haskey(memo, x) return memo[r] end
-    for (i, zi) in enumerate(R[1:r])
-      for z in zi
-        if x&z == x 
-          memo[x] = i-1
-          return i-1 
-        end
+    for z in R[r]
+      if x&z == x
+        return true
       end
     end
     return false
@@ -92,6 +88,7 @@ function my_random_erection(n, P, T=UInt16, OVERRIDE=[])
         if x&set == x continue end
       end
       
+      rank[x] = r
       insert_set!(x)
       p[r] -= 1
     end 

@@ -1,22 +1,22 @@
 using Graphs
 using DataStructures
+using Memoize
 
 include("utils.jl")
 
 """
     function is_indep(M::ClosedSetsMatroid, S::Integer)
 
-Independence oracle. Determines efficiently whether a given set S is independent in the matroid M.
+Determines whether a given set S is independent in the matroid M, given by the closed sets of M grouped by rank. Uses (I.1) in Greene (1989).
 """
 function is_indep(M::ClosedSetsMatroid, S::Integer)
-  card = Base.count_ones(S)
-  if card > M.r return false end
-  
-  for C ∈ M.F[card+1]
-    if S&C == S return true end
+  t = Base.count_ones(S)
+
+  for F in M.F[t]
+    if Base.count_ones(S&F) > t-1 return false end
   end
 
-  return false
+  return true
 end
 
 function is_indep(M::FullMatroid, S::Integer)
@@ -26,6 +26,74 @@ end
 
 function is_indep(M::UniformMatroid, S::Integer)
   return Base.count_ones(S) <= M.r
+end
+
+"""
+    function is_indep(M::ClosedSetsMatroid, S::Integer)
+
+Determines whether a given set S is a circuit in the matroid M, given by the closed sets of M. Uses (C.1) and (C.2) in Greene (1989).
+"""
+function is_circuit(M::ClosedSetsMatroid, S::Integer)
+  t = Base.count_ones(S)
+
+  for F in M.F[t] # (C.1) S ⊆ F for some F ∈ F_{t-1}.
+    if S&F==S @goto C2 end
+  end
+  return false
+
+  @label C2
+  for F in M.F[t-1] # (C.2) |S ∩ F| ≤ r(F) for all F ∈ F_{t-2}.
+    if Base.count_ones(S&F) > t-2 return false end
+  end
+
+  return true
+end
+
+"""
+    function minimal_spanning_subsets(M::ClosedSetsMatroid, A::Integer)
+
+Algorithm 3.1 from Greene (1989). Given a matroid M = (E, F) and some subset A of E, finds a minimal spanning subset of A. If A = E, this finds a basis of M.
+"""
+minimal_spanning_subset(M::ClosedSetsMatroid, A::Integer) = _mss(M, 0, A)
+
+function _mss(M::ClosedSetsMatroid, j::Integer, Ā::Integer)
+  B = [Ā&F for F in M.F[j+1] if Base.count_ones(Ā&F) > j]
+
+  while length(B) == 0
+    if j >= Base.count_ones(Ā)-1 return Ā end
+    
+    j += 1
+    B = [Ā&F for F in M.F[j+1] if Base.count_ones(Ā&F) > j]
+  end
+
+  _mss(M, j, Ā&~rand_el(reduce(|, B)))
+end
+
+"""
+    function minimal_spanning_subsets(M::ClosedSetsMatroid, A::Integer)
+
+A modification of Algorithm 3.1 from Greene (1989) that finds all minimal spanning subsets of A ⊆ E, given a matroid M = (E, F). If A = E, this finds the bases of M.
+"""
+minimal_spanning_subsets(M::ClosedSetsMatroid, A::Integer) = _mss_all(M, 0, A)
+
+function _mss_all(M::ClosedSetsMatroid, j::Integer, Ā::Integer)
+  B = [Ā&F for F in M.F[j+1] if Base.count_ones(Ā&F) > j]
+
+  while length(B) == 0
+    if j >= Base.count_ones(Ā)-1 return Ā end
+    
+    j += 1
+    B = [Ā&F for F in M.F[j+1] if Base.count_ones(Ā&F) > j]
+  end
+
+  bases = Set()
+  t = reduce(|, B)
+  while t > 0
+    x = t&-t
+    bases = bases ∪ _mss_all(M, j, Ā&~x)
+    t &= ~x
+  end
+  return bases
 end
 
 """

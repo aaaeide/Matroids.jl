@@ -1,6 +1,6 @@
 using Graphs
 using DataStructures
-using Memoize
+# using Memoize
 
 include("utils.jl")
 
@@ -29,7 +29,7 @@ function is_indep(M::UniformMatroid, S::Integer)
 end
 
 """
-    function is_indep(M::ClosedSetsMatroid, S::Integer)
+    function is_circuit(M::ClosedSetsMatroid, S::Integer)
 
 Determines whether a given set S is a circuit in the matroid M, given by the closed sets of M. Uses (C.1) and (C.2) in Greene (1989).
 """
@@ -76,6 +76,7 @@ A modification of Algorithm 3.1 from Greene (1989) that finds all minimal spanni
 """
 minimal_spanning_subsets(M::ClosedSetsMatroid, A::Integer) = _mss_all(M, 0, A)
 
+# TODO: @memoize
 function _mss_all(M::ClosedSetsMatroid, j::Integer, Ā::Integer)
   B = [Ā&F for F in M.F[j+1] if Base.count_ones(Ā&F) > j]
 
@@ -95,6 +96,8 @@ function _mss_all(M::ClosedSetsMatroid, j::Integer, Ā::Integer)
   end
   return bases
 end
+
+bases(M::ClosedSetsMatroid) = _mss_all(M, 0, 2^M.n-1)
 
 """
     function rank(M::KnuthMatroid, S::Integer)

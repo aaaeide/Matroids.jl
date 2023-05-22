@@ -29,4 +29,5 @@ end
 
   @test minimal_spanning_subset(M, 2^n-1) in B
   @test minimal_spanning_subsets(M, UInt16(2^n-1)) == B
+  @test bases(M) == B
 end

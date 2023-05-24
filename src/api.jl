@@ -260,6 +260,50 @@ function knuth_partition(Ms, lims=nothing)
   return S
 end
 
+"""
+    function mms_i(Mi, n)
+
+Finds the maximin share of agent i for a fair allocation instance with matroid-rank valuations, given matroid Mi and the number of agents n.
+"""
+function mms_i(M_i, n)
+  # An initial partition into independent subsets (subjectively so for i).
+  A = knuth_partition([M_i for _ in 1:n])
+
+  # Find v_i(A_p) - v_i(A_q) ∀ p,q ∈ [n].
+  D = zeros(Int8, n, n)
+  for j in 1:n for k in 1:n
+    # v_i(A_p) = |A_p| since all sets in A are independent wrt M_i.
+    D[j,k] = length(A[j]) - length(A[k])
+  end end
+
+  jk = argmax(D)
+  while D[jk] > 1
+    j,k = Tuple(jk)
+    @assert length(A[j]) - length(A[k]) >= 2
+
+    # By the augmentation property, ∃g ∈ A_j st A_k + g ∈ I_i.
+    g = nothing
+    for g´ ∈ setdiff(A[j], A[k]) if is_indep(M_i, A[k] ∪ g´)
+      g = g´; break
+    end end
+
+    @assert g !== nothing
+
+    # Update A.
+    setdiff!(A[j], g); union!(A[k], g)
+
+    # Update D.
+    for l in 1:n
+      D[j, l] -= 1; D[l, j] += 1 # A_j is one smaller.
+      D[k, l] += 1; D[l, k] -= 1 # A_k is one larger.
+    end
+
+    jk = argmax(D)
+  end
+  
+  return minimum(length, A)
+end
+
 
 """
     exchange_graph(Ms::Array{KnuthMatroid}, sets::Array{Integer}, n::Integer)

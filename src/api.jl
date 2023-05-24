@@ -1,8 +1,12 @@
 using Graphs
 using DataStructures
 # using Memoize
-
+include("types.jl")
 include("utils.jl")
+
+ground_set(M::ClosedSetsMatroid) = bits_to_set(2^M.n-1)
+ground_set(M::FullMatroid) = bits_to_set(2^M.n-1)
+ground_set(M::UniformMatroid) = Set([1:M.n])
 
 """
     function is_indep(M::ClosedSetsMatroid, S::Integer)
@@ -12,6 +16,8 @@ Determines whether a given set S is independent in the matroid M, given by the c
 function is_indep(M::ClosedSetsMatroid, S::Integer)
   t = Base.count_ones(S)
 
+  if t > length(M.F) return false end
+
   for F in M.F[t]
     if Base.count_ones(S&F) > t-1 return false end
   end
@@ -19,14 +25,20 @@ function is_indep(M::ClosedSetsMatroid, S::Integer)
   return true
 end
 
+is_indep(M::ClosedSetsMatroid, S) = is_indep(M, set_to_bits(S))
+
 function is_indep(M::FullMatroid, S::Integer)
   card = Base.count_ones(S)
   return S in M.I[card+1]
 end
 
+is_indep(M::FullMatroid, S) = is_indep(M, set_to_bits(S))
+
 function is_indep(M::UniformMatroid, S::Integer)
   return Base.count_ones(S) <= M.r
 end
+
+is_indep(M::UniformMatroid, S) = is_indep(M, set_to_bits(S))
 
 """
     function is_circuit(M::ClosedSetsMatroid, S::Integer)
@@ -178,6 +190,74 @@ function matroid_partition(Ms::Vector{Matroid})
 
   popat!(Ms, k+1) # Cleanup.
   return Ss
+end
+
+"""
+Knuth's 1973 Matroid Partitioning algorithm for partitioning a set into subsets independent in various given matroids.
+
+Knuth's description: Given k matroids Ms = [M1, ..., Mk] on the same ground set E, the algorithm finds a k-partitioning [S1, ..., Sk] of the elements of E such that Sj is independent in matroid Mj, and nj <= |Sj| <= nj´, for given limits nj and nj´. 
+
+I am attempting to drop the upper limit nj´ for each element j (implicitly it is infinity for all matroids).
+"""
+function knuth_partition(Ms, lims=nothing)
+  n = Ms[1].n; k = length(Ms)
+  S0 = Set(1:n) # The unallocated items.
+  S = [Set() for _ in 1:k] # The partition-to-be.
+  color = Dict(x=>0 for x in 1:n) # color[x] = j iff x ∈ S[j].
+  for y in 1:k color[-y] = y end # -y is the 'standard' element of color y.
+  succ = [0 for _ in 1:n]
+
+  lims = lims === nothing ? [0 for _ in 1:k] : lims
+
+  function augment(r)
+    for x in 1:n succ[x] = 0 end
+    
+    A = Set(1:n)
+    B = r > 0 ? Set(-r) : Set(-j for j in 1:k)
+    
+    while B != Set()
+      C = Set()
+      for y ∈ B for x ∈ A
+        j = color[y]
+
+        if is_indep(Ms[j], x ∪ setdiff(S[j], y))
+          succ[x] = y
+          A = setdiff(A, x)
+          C = C ∪ x
+          if color[x] == 0 repaint(x); return end
+        end
+      end end
+      B = C
+    end
+
+    println("$A violates the condition of Theorem 3")
+  end
+
+  function repaint(x)
+    while x ∈ 1:n
+      y = succ[x]
+      j = color[x]
+      
+      if j == 0 setdiff!(S0, x) else setdiff!(S[j], x) end
+      
+      j = color[y]
+      S[j] = S[j] ∪ x
+      color[x] = j
+      x = y
+    end
+  end
+
+  # Ensure every part gets at least its lower limit.
+  for j in 1:k for _ in 1:lims[j]
+    augment(j)
+  end end
+
+  # Allocate the rest.
+  while S0 != Set()
+    augment(0)
+  end
+
+  return S
 end
 
 

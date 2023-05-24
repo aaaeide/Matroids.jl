@@ -14,7 +14,7 @@ function rank(m::GraphicMatroid, S)
 end
 
 function is_indep(m::GraphicMatroid, S)
-  edgelist = [e for (i, e) in enumerate(edges(g)) if i in S]
+  edgelist = [e for (i, e) in enumerate(edges(m.g)) if i in S]
   subgraph, _vmap = induced_subgraph(m.g, edgelist)
   return !is_cyclic(subgraph)
 end

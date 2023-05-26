@@ -197,7 +197,7 @@ Knuth's 1973 Matroid Partitioning algorithm for partitioning a set into subsets 
 
 Knuth's description: Given k matroids Ms = [M1, ..., Mk] on the same ground set E, the algorithm finds a k-partitioning [S1, ..., Sk] of the elements of E such that Sj is independent in matroid Mj, and nj <= |Sj| <= nj´, for given limits nj and nj´. 
 
-I am attempting to drop the upper limit nj´ for each element j (implicitly it is infinity for all matroids).
+This implementation drops the upper limit nj´ for each element j (implicitly it is infinity for all matroids). Supply nj in array lims (lims[j] = nj).
 """
 function knuth_partition(Ms, lims=nothing)
   n = Ms[1].n; k = length(Ms)
@@ -269,7 +269,7 @@ function mms_i(M_i, n)
   # An initial partition into independent subsets (subjectively so for i).
   A = knuth_partition([M_i for _ in 1:n])
 
-  # Find v_i(A_p) - v_i(A_q) ∀ p,q ∈ [n].
+  # Setup matrix D st D[j,k] v_i(A_j) - v_i(A_k) ∀ j,k ∈ [n].
   D = zeros(Int8, n, n)
   for j in 1:n for k in 1:n
     # v_i(A_p) = |A_p| since all sets in A are independent wrt M_i.
@@ -279,15 +279,12 @@ function mms_i(M_i, n)
   jk = argmax(D)
   while D[jk] > 1
     j,k = Tuple(jk)
-    @assert length(A[j]) - length(A[k]) >= 2
 
     # By the augmentation property, ∃g ∈ A_j st A_k + g ∈ I_i.
     g = nothing
     for g´ ∈ setdiff(A[j], A[k]) if is_indep(M_i, A[k] ∪ g´)
       g = g´; break
     end end
-
-    @assert g !== nothing
 
     # Update A.
     setdiff!(A[j], g); union!(A[k], g)

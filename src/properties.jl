@@ -2,7 +2,7 @@ using Graphs
 
 ground_set(M::ClosedSetsMatroid) = bits_to_set(2^M.n-1)
 ground_set(M::FullMatroid) = bits_to_set(2^M.n-1)
-ground_set(M::UniformMatroid) = Set([1:M.n])
+ground_set(M::UniformMatroid) = Set(1:M.n)
 ground_set(M::GraphicMatroid) = edges(M.g)
 
 
@@ -136,7 +136,7 @@ is_circuit(M::FullMatroid, S::Integer) = S in M.C
 is_circuit(M::FullMatroid, S) = is_circuit(M, set_to_bits(S))
 
 
-is_circuit(M::UniformMatroid, S::Integer) = r == Base.count_ones(S)-1 <= M.n
+is_circuit(M::UniformMatroid, S::Integer) = M.r == Base.count_ones(S)-1 <= M.n
 is_circuit(M::UniformMatroid, S) = is_circuit(M, set_to_bits(S))
 
 
@@ -270,8 +270,9 @@ function closure(M::FullMatroid, S::Integer)
 end
 closure(M::FullMatroid, S) = closure(M, set_to_bits(S))
 
-
-closure(M::UniformMatroid, S) = throw("unimplemented")
+closure(M::UniformMatroid, S::Integer) = closure(M, bits_to_set(S))
+closure(M::UniformMatroid, S) = 
+  length(S) <= M.r ? S : ground_set(M)
 
 
 function closure(M::GraphicMatroid, S)

@@ -5,12 +5,10 @@ Converts a Set to its bitstring representation.
 
 NB! set_to_bits and its inverse bits_to_set assume the elements start at 1.  
 """
-function set_to_bits(set::Set, T=UInt64)
+function set_to_bits(set, T=UInt64)
   if length(set) == 0 return T(0) end
-  T(sum(2^(x-1) for x in set))
+  T(reduce(+, (2^(x-1) for x in set), init=0))
 end
-
-set_to_bits(vec, T=UInt64) = set_to_bits(Set(vec), T)
 
 
 """

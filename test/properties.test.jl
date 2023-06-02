@@ -1,4 +1,5 @@
 using Test
+using Random
 # using Graphs
 
 # @testset "bfs" begin
@@ -42,7 +43,7 @@ using Test
   @test bases(M) == B
 end
 
-@testset "ClosedSetsMatroid properties" begin
+@testset "FullMatroid properties" begin
   # The example from Knuth (1974) section 3.
   n = 10                  # 134   159    256   358    379    238
   enlargements = [nothing, [0x1a, 0x222, 0x64, 0x128, 0x288, 0x10c]]
@@ -73,4 +74,33 @@ end
   @test minimal_spanning_subset(M, 2^n-1) in B
   @test minimal_spanning_subsets(M, UInt16(2^n-1)) == B
   @test bases(M) == B
+end
+
+@testset "UniformMatroid properties" begin
+  M = UniformMatroid(10, 6)
+
+  @test is_indep(M, 0)
+
+  for i in 1:6
+    S = randperm(10)[1:i]
+    @test is_indep(M, S) || S
+    @test is_circuit(M, S) == false || S
+    @test rank(M, S) == i || S
+    @test closure(M, S) == S || S
+  end
+
+  S = randperm(10)[1:7]
+  @test is_indep(M, S) == false || S
+  @test is_circuit(M, S) || S
+  @test rank(M, S) == 6 || S
+  @test closure(M, S) == Set(1:10) || S
+
+  
+  for i in 8:10
+    S = randperm(10)[1:i]
+    @test is_indep(M, S) == false || S
+    @test is_circuit(M, S) == false || S
+    @test rank(M, S) == 6 || S
+    @test closure(M, S) == Set(1:10) || S
+  end
 end

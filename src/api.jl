@@ -57,14 +57,19 @@ function matroid_partition(Ms::Vector{Matroid})
   return Ss
 end
 
+
+
 """
+    matroid_partition_knuth_73(Ms, lims=nothing)
+
+
 Knuth's 1973 Matroid Partitioning algorithm for partitioning a set into subsets independent in various given matroids.
 
 Knuth's description: Given k matroids Ms = [M1, ..., Mk] on the same ground set E, the algorithm finds a k-partitioning [S1, ..., Sk] of the elements of E such that Sj is independent in matroid Mj, and nj <= |Sj| <= nj´, for given limits nj and nj´. 
 
 This implementation drops the upper limit nj´ for each element j (implicitly it is infinity for all matroids). Supply nj in array lims (lims[j] = nj).
 """
-function knuth_partition(Ms, lims=nothing)
+function matroid_partition_knuth_73(Ms, lims=nothing)
   n = Ms[1].n; k = length(Ms)
   S0 = Set(1:n) # The unallocated items.
   S = [Set() for _ in 1:k] # The partition-to-be.
@@ -123,47 +128,6 @@ function knuth_partition(Ms, lims=nothing)
   end
 
   return S
-end
-
-"""
-    function mms_i(Mi, n)
-
-Finds the maximin share of agent i for a fair allocation instance with matroid-rank valuations, given matroid Mi and the number of agents n.
-"""
-function mms_i(M_i, n)
-  # An initial partition into independent subsets (subjectively so for i).
-  A = knuth_partition([M_i for _ in 1:n])
-
-  # Setup matrix D st D[j,k] v_i(A_j) - v_i(A_k) ∀ j,k ∈ [n].
-  D = zeros(Int8, n, n)
-  for j in 1:n for k in 1:n
-    # v_i(A_p) = |A_p| since all sets in A are independent wrt M_i.
-    D[j,k] = length(A[j]) - length(A[k])
-  end end
-
-  jk = argmax(D)
-  while D[jk] > 1
-    j,k = Tuple(jk)
-
-    # By the augmentation property, ∃g ∈ A_j st A_k + g ∈ I_i.
-    g = nothing
-    for g´ ∈ setdiff(A[j], A[k]) if is_indep(M_i, A[k] ∪ g´)
-      g = g´; break
-    end end
-
-    # Update A.
-    setdiff!(A[j], g); union!(A[k], g)
-
-    # Update D.
-    for l in 1:n
-      D[j, l] -= 1; D[l, j] += 1 # A_j is one smaller.
-      D[k, l] += 1; D[l, k] -= 1 # A_k is one larger.
-    end
-
-    jk = argmax(D)
-  end
-  
-  return minimum(length, A)
 end
 
 

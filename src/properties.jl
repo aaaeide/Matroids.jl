@@ -1,4 +1,5 @@
 using Graphs
+using Memoize
 
 ground_set(M::ClosedSetsMatroid) = bits_to_set(2^M.n-1)
 ground_set(M::FullMatroid) = bits_to_set(2^M.n-1)
@@ -25,7 +26,7 @@ function is_indep(M::ClosedSetsMatroid, S::Integer)
   if t > length(M.F) return false end
 
   for F in M.F[t]
-    if Base.count_ones(S&F) > t-1 return false end
+    if S&F==S return false end
   end
 
   return true
@@ -206,7 +207,7 @@ minimal_spanning_subsets(M::ClosedSetsMatroid, A) = minimal_spanning_subsets(M, 
 minimal_spanning_subsets(M::FullMatroid, A::Integer) = _mss_all(M, 0, A)
 minimal_spanning_subsets(M::FullMatroid, A) = minimal_spanning_subsets(M, set_to_bits(A))
 
-function _mss_all(M, j::Integer, Ā::Integer)
+@memoize function _mss_all(M, j::Integer, Ā::Integer)
   B = [Ā&F for F in M.F[j+1] if Base.count_ones(Ā&F) > j]
 
   while length(B) == 0

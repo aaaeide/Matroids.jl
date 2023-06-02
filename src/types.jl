@@ -1,3 +1,5 @@
+using Graphs
+
 struct ClosedSetsMatroid{T}
   n::Integer # Size of universe
   r::Integer # Final rank (r == length(F)).
@@ -19,6 +21,13 @@ end
 struct UniformMatroid
   n::Integer
   r::Integer
+end
+
+struct GraphicMatroid
+  g::Graph
+  n::Integer
+  r::Integer
+  GraphicMatroid(g::Graph) = new(g, ne(g), length(kruskal_mst(g)))
 end
 
 FreeMatroid(n) = UniformMatroid(n, n)

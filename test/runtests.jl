@@ -8,5 +8,5 @@ using Test
     
     include("kmc.test.jl")
     include("erect.test.jl")
-    include("api.test.jl")
+    include("properties.test.jl")
 end

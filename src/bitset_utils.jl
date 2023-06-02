@@ -3,7 +3,7 @@
 
 Converts a Set to its bitstring representation. 
 
-NB! set_to_bits and its inverse bits_to_set assume the elements start at 1.  
+NB! set_to_bits and its inverse bits_to_set assume the elements (in the set representation) start at 1.
 """
 function set_to_bits(set, T=UInt64)
   if length(set) == 0 return T(0) end
@@ -38,6 +38,14 @@ function rand_el(S::Integer)
   x = rand([2^(i-1) for (i,c) in enumerate(reverse(bitstring(S))) if c == '1'])
   return convert(typeof(S), x)
 end
+
+
+"""
+    add_el(S::Integer, e::Integer)
+
+Returns the set S ∪ {e}. NB! If S is an n-digit set, this assumes 0≤e≤n-1.
+"""
+add_el(S::Integer, e::Integer) = S | 1<<e
 
 # # Drawing graphs
 # using GraphPlot

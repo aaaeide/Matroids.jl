@@ -7,7 +7,7 @@ Erects a matroid in the same way that Knuth's 1974 matroid erection algorithm do
 
 n is |E|, p is the list where p[i] is the number of coarsenings (closed sets to increase by 1) at rank i+1. Sets are represented as binary numbers (ø = 0x0000, E = 0xffff when n=16).
 """
-function my_random_erection(n, P, T=UInt16, OVERRIDE=[])
+function redundant_erect(n, P, T=UInt16, OVERRIDE=[])
   p = copy(P)
   r = 1
   E::T = big"2"^n-1

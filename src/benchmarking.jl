@@ -85,7 +85,7 @@ function benchmark_erect()
 
   for test in tests 
     p = copy(test.p)
-    expr = :( @benchmark my_random_erection($(test.n), $p, $(test.T)) seconds=600 )
+    expr = :( @benchmark redundant_erect($(test.n), $p, $(test.T)) seconds=600 )
     b = eval(expr)
 
     time = median(b).time

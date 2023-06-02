@@ -2,18 +2,23 @@ using Matroids
 using Test
 
 @testset "Matroids.jl" begin
-    include("../src/utils.jl")
     include("../src/types.jl")
-    include("../src/kmc.jl")
-    include("../src/erect.jl")
-    include("../src/properties.jl")
+    include("../src/bitset_utils.jl")
 
+    include("../src/properties.jl")
+    
+    include("../src/constructions/knuth.jl")
+    include("../src/constructions/erect.jl")
+    
     # Write your tests here.
 
     @test Matroids.greet() == "A matroid /ˈmeɪtrɔɪd/ is a structure that abstracts and generalizes the notion of linear independence in vector spaces."
 
     
-    include("kmc.test.jl")
-    include("erect.test.jl")
+    include("constructions/knuth.test.jl")
+    include("constructions/erect.test.jl")
+
     include("properties.test.jl")
+
+    include("bitset_utils.test.jl")
 end

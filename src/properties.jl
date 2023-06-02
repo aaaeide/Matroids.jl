@@ -76,19 +76,17 @@ rank(M::Matroid) = M.r
 Rank ``oracle''. Returns the rank of the set S in the matroid M.
 """
 function rank(M::ClosedSetsMatroid, S::Integer)
-  for (r, Fr) in enumerate(M.F)
-    for B ∈ Fr
+  for (r, Fr) in enumerate(M.F) for B ∈ Fr
       if S&B == S return r-1 end
-    end
-  end
+  end end
 end
 rank(M::ClosedSetsMatroid, S) = rank(M, set_to_bits(S))
 
 
 function rank(M::FullMatroid, S::Integer)
-  for (r, Ir) in enumerate(M.I)
-    if S in Ir return r-1 end
-  end
+  for (r, Fr) in enumerate(M.F) for F ∈ Fr
+    if S&F == S return r-1 end
+  end end
 end
 rank(M::FullMatroid, S) = rank(M, set_to_bits(S))
 

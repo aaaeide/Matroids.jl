@@ -33,4 +33,4 @@ end
 FreeMatroid(n) = UniformMatroid(n, n)
 
 
-Matroid = Union{ClosedSetsMatroid, FullMatroid, UniformMatroid}
+Matroid = Union{ClosedSetsMatroid, FullMatroid, UniformMatroid, GraphicMatroid}

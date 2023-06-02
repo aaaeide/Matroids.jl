@@ -1,6 +1,5 @@
 using Test
 # using Graphs
-include("../src/properties.jl")
 
 # @testset "bfs" begin
 #   # Zachary's karate club
@@ -10,8 +9,7 @@ include("../src/properties.jl")
 #   @test bfs(karate, 1, x->x==16) == [1,3,33,16]
 # end
 
-@testset "matroid properties" begin
-  include("../src/kmc.jl")
+@testset "ClosedSetsMatroid properties" begin
   # The example from Knuth (1974) section 3.
   n = 10
   enlargements = [nothing, [0x1a, 0x222, 0x64, 0x128, 0x288, 0x10c]]

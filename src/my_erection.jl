@@ -1,7 +1,5 @@
 using Graphs, MetaGraphs, StatsBase
 
-include("utils.jl")
-
 """
     function my_random_erection(n, p, T=UInt16)
 

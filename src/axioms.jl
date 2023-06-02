@@ -1,5 +1,3 @@
-include("kmc.jl")
-
 """
 Tests for the axioms for the closed sets of a matroid, as given by Knuth (1974).
 """

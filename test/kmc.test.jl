@@ -5,7 +5,6 @@ function set_to_bits(set)
 end
 
 @testset "Pi-based KMC example" begin
-  include("../src/kmc.jl")
   # The example from Knuth (1974) section 3.
   n = 10
   enlargements = [nothing, [0x1a, 0x222, 0x64, 0x128, 0x288, 0x10c]]

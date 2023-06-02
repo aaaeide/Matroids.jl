@@ -1,5 +1,3 @@
-include("types.jl")
-
 """
 An improved version of KMC we are also finding the independent sets and circuits of the matroid during generation.
 

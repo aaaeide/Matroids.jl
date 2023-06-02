@@ -1,7 +1,5 @@
 using StatsBase
 
-include("types.jl")
-
 function VERBOSE(thresh) thresh >= 100 end
 function bst(x) bitstring(x)[1:end] end
 

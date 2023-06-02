@@ -1,8 +1,5 @@
 using Graphs
 
-include("types.jl")
-include("utils.jl")
-
 ground_set(M::ClosedSetsMatroid) = bits_to_set(2^M.n-1)
 ground_set(M::FullMatroid) = bits_to_set(2^M.n-1)
 ground_set(M::UniformMatroid) = Set([1:M.n])

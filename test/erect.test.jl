@@ -1,5 +1,4 @@
 using Test
-include("../src/erect.jl")
 
 @testset "erect_v1" begin
   # The example from Knuth (1974) section 3.

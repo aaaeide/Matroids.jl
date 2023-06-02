@@ -80,6 +80,7 @@ end
   M = UniformMatroid(10, 6)
 
   @test is_indep(M, 0)
+  @test rank(M) == 6
 
   for i in 1:6
     S = randperm(10)[1:i]
@@ -103,4 +104,12 @@ end
     @test rank(M, S) == 6 || S
     @test closure(M, S) == Set(1:10) || S
   end
+end
+
+@testset "GraphicMatroid properties" begin
+  G = smallgraph(:karate)
+  M = GraphicMatroid(G)
+
+  @test rank(M) == 33
+  #TODO
 end

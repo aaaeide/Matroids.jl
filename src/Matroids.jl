@@ -14,7 +14,7 @@ include("axioms.jl")
 include("constructions/knuth.jl")
 include("constructions/erect.jl")
 
+include("fair_allocation/mrf_profile.jl")
 include("fair_allocation/fairness.jl")
-include("fair_allocation/matroidrank_valuation.jl")
 
 end

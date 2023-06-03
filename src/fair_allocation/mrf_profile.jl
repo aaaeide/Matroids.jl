@@ -1,3 +1,4 @@
+using Allocations
 import Allocations: bundle_value
 
 """

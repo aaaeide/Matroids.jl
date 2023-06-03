@@ -4,22 +4,6 @@ using Memoize
 
 
 """
-    function Δ(M, S, e)
-
-Returns the marginal gain of adding e to the set S, given the matroid M.
-
-0 ≤ e ≤ M.n-1
-"""
-function Δ(M, S::Integer, e)
-  return rank(M, S | 1<<e) - rank(M, S)
-end
-
-function Δ(M, S, e)
-  return rank(M, S ∪ e) - rank(M, S)
-end
-
-
-"""
     function matroid_partition(Ms::Vector{Matroid})
 
 Partitions a set of elements into k subsets independent in the k given matroids Ms. The matroids are assumed to be over the same ground set E.
@@ -198,28 +182,58 @@ function exchange_graph(Ms::Vector{T}, A::BitMatrix) where T <: Matroid
   return D
 end
 
-
 """
-    function find_transfer_path(G, d, Ms, Ss, i::Integer, j::Integer, n::Integer)
+    find_shortest_path(D, from, to)
 
-Accepts an m-length array Ms of matroids over a ground set E, an m-length array Ss of subsets of E, the size of the universe |E| = n, and indexes 0 <= i <= m, 0 <= j <= m. Finds the shortest **transfer path** between i and j.
-
-A transfer path is a path (s, e_1, ..., e_k) in the exchange graph G, such that 
-- Δ(Ms[i], Ss[i], e_1) = 1,
-- rank(Ms[x], Ss[x] - e_x + e_{x+1}) = rank(Ms[x], Ss[x]) for each x in 2:k-1.
+Finds a shortest path [s,...,t], where s ∈ from and t ∈ to.
 """
-function find_transfer_path(G, d, Ms, Ss, n::Integer, i::Integer, j::Integer)
-  # Compute the set F_i of elements with positive marginal gain for i.
-  # TODO: Remember this between iterations.
-  F_i = [e for e in vertices(G) if Δ(Ms[i], Ss[i], e-1) == 1] 
-  
-  add_vertex!(G)
-  s = last(vertices(G))
-  for e in F_i add_edge!(G, s, e) end
+function find_shortest_path(D, from, to)
+  X = intersect(from, to)
+  if length(X) > 0
+    return [X[1]]
+  end
 
-  # This BFS gives us the path [s, e_1, ..., e_k] of elements (0..n-1) or false.
-  return bfs(G, s, v -> d[v-1] == j)
+  ds = dijkstra_shortest_paths(D, from)
+  paths = []
+
+  for g in to
+    path = [ds.parents[g], g]
+    
+    while path[1] ∉ from
+      if path[1] == 0 @goto skip end
+      pushfirst!(path, ds.parents[path[1]])
+    end
+
+    push!(paths, path)
+    @label skip
+  end
+
+  if length(paths) == 0 return nothing end
+  return argmin(length, paths)
 end
+
+
+# """
+#     function find_transfer_path(G, d, Ms, Ss, i::Integer, j::Integer, n::Integer)
+
+# Accepts an m-length array Ms of matroids over a ground set E, an m-length array Ss of subsets of E, the size of the universe |E| = n, and indexes 0 <= i <= m, 0 <= j <= m. Finds the shortest **transfer path** between i and j.
+
+# A transfer path is a path (s, e_1, ..., e_k) in the exchange graph G, such that 
+# - Δ(Ms[i], Ss[i], e_1) = 1,
+# - rank(Ms[x], Ss[x] - e_x + e_{x+1}) = rank(Ms[x], Ss[x]) for each x in 2:k-1.
+# """
+# function find_transfer_path(G, d, Ms, Ss, n::Integer, i::Integer, j::Integer)
+#   # Compute the set F_i of elements with positive marginal gain for i.
+#   # TODO: Remember this between iterations.
+#   F_i = [e for e in vertices(G) if Δ(Ms[i], Ss[i], e-1) == 1] 
+  
+#   add_vertex!(G)
+#   s = last(vertices(G))
+#   for e in F_i add_edge!(G, s, e) end
+
+#   # This BFS gives us the path [s, e_1, ..., e_k] of elements (0..n-1) or false.
+#   return bfs(G, s, v -> d[v-1] == j)
+# end
 
 
 function transfer!(i, p, Ms, Ss, d, n)

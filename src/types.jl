@@ -1,6 +1,8 @@
 using Graphs
 
-struct ClosedSetsMatroid{T}
+abstract type Matroid end
+
+struct ClosedSetsMatroid{T} <: Matroid
   n::Integer # Size of universe
   r::Integer # Final rank (r == length(F)).
   F::Vector{Set{T}} # Closed sets by rank
@@ -8,7 +10,7 @@ struct ClosedSetsMatroid{T}
   Type::DataType
 end
 
-struct FullMatroid{T}
+struct FullMatroid{T} <: Matroid
   n::Integer
   r::Integer
   F::Vector{Set{T}} # Closed sets by rank
@@ -18,12 +20,12 @@ struct FullMatroid{T}
   Type::DataType
 end
 
-struct UniformMatroid
+struct UniformMatroid <: Matroid
   n::Integer
   r::Integer
 end
 
-struct GraphicMatroid
+struct GraphicMatroid <: Matroid
   g::Graph
   n::Integer
   r::Integer
@@ -32,6 +34,3 @@ end
 
 FreeMatroid(n) = UniformMatroid(n, n)
 ZeroMatroid(n) = UniformMatroid(n, 0)
-
-
-Matroid = Union{ClosedSetsMatroid, FullMatroid, UniformMatroid, GraphicMatroid}

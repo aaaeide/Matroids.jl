@@ -19,4 +19,6 @@ include("fair_allocation/mrf_profile.jl")
 include("fair_allocation/fairness.jl")
 include("fair_allocation/algorithms.jl")
 
+
+export Matroid, ZeroMatroid, FreeMatroid, UniformMatroid, GraphicMatroid, MatroidRank, yankee_swap
 end

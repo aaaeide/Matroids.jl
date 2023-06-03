@@ -15,8 +15,7 @@ na(V::MatroidRank) = length(V.matroids)
 ni(V::MatroidRank) = V.m
 
 value(V::MatroidRank, i, S) = rank(V.matroids[i], S)
-value(V::MatroidRank, i, S::BitVector) = 
-    rank(V.matroids[i], [g for g in 1:ni(V) if S[g] == 1])
+value(V::MatroidRank, i, S::BitVector) = bv_rank(V.matroids[i], S)
 value(V::MatroidRank, i, g::Int) = value(V, i, Set(g))
 
 # Disambiguation:

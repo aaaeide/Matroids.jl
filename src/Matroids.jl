@@ -20,5 +20,5 @@ include("fair_allocation/fairness.jl")
 include("fair_allocation/algorithms.jl")
 
 
-export Matroid, ZeroMatroid, FreeMatroid, UniformMatroid, GraphicMatroid, MatroidRank, yankee_swap
+export Matroid, ZeroMatroid, FreeMatroid, UniformMatroid, GraphicMatroid, knuth_matroid, random_knuth_matroid, rank, set_to_bits, MatroidRank, yankee_swap
 end

@@ -96,7 +96,7 @@ rank(M::UniformMatroid, S::Integer) = min(Base.count_ones(S), M.r)
 rank(M::UniformMatroid, S) = rank(M, set_to_bits(S))
 
 
-rank(M::GraphicMatroid, S) = length(minimal_spanning_subset(M, S))
+rank(M::GraphicMatroid, S) = length(S) > 0 ? length(minimal_spanning_subset(M, S)) : 0
 
 """
     bv_rank(M::Matroid, S::BitVector)

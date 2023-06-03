@@ -1,4 +1,5 @@
 using Graphs
+using Multigraphs
 
 abstract type Matroid end
 

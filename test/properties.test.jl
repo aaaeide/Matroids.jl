@@ -134,5 +134,5 @@ end
   M = GraphicMatroid(G)
 
   @test rank(M) == 33
-  #TODO
+  @test rank(M, []) == 0
 end

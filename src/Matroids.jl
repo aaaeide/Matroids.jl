@@ -10,11 +10,13 @@ include("types.jl")
 include("api.jl")
 include("bitset_utils.jl")
 include("axioms.jl")
+include("properties.jl")
 
 include("constructions/knuth.jl")
 include("constructions/erect.jl")
 
 include("fair_allocation/mrf_profile.jl")
 include("fair_allocation/fairness.jl")
+include("fair_allocation/algorithms.jl")
 
 end

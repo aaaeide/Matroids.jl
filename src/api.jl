@@ -10,8 +10,12 @@ Returns the marginal gain of adding e to the set S, given the matroid M.
 
 0 ≤ e ≤ M.n-1
 """
-function Δ(M, S, e)
+function Δ(M, S::Integer, e)
   return rank(M, S | 1<<e) - rank(M, S)
+end
+
+function Δ(M, S, e)
+  return rank(M, S ∪ e) - rank(M, S)
 end
 
 
@@ -131,37 +135,67 @@ function matroid_partition_knuth_73(Ms, lims=nothing)
 end
 
 
-"""
-    exchange_graph(Ms::Array{KnuthMatroid}, sets::Array{Integer}, n::Integer)
+# """
+#     exchange_graph(Ms::Array{KnuthMatroid}, sets::Array{Integer}, n::Integer)
 
-Constructs an exchange graph given an m-length array Ms of matroids over the same ground set E, and an m-length array Ss of subsets of E. Each set is represented as an integer of at least n bits, where a 1-bit at bit i denotes that the set contains the element i. Each element is assumed to be in exactly one set. Each set Ss[i] corresponds to the matroid Ms[i], with which the rank can be deduced.
+# Constructs an exchange graph given an m-length array Ms of matroids over the same ground set E, and an m-length array Ss of subsets of E. Each set is represented as an integer of at least n bits, where a 1-bit at bit i denotes that the set contains the element i. Each element is assumed to be in exactly one set. Each set Ss[i] corresponds to the matroid Ms[i], with which the rank can be deduced.
+
+# The exchange graph is a graph whose vertices are the elements of E, and contains the edge (i,j) iff rank_i(S_i - i + j) = rank_i(S_i), where S_i is the set that contains i and rank_i the rank function for the corresponding matroid. In other words, it contains an edge (i,j) iff i can be replaced by j with no loss in rank.
+
+# Returns the exchange graph G and a dictionary d that maps between each element of E and the set in Ss that contains it. 
+
+# NB! Whereas the elements are the set {0, ..., n-1}, the nodes in the graph make up the set {1, ..., n}. That is, vertex v represents element v-1. This is because nodes are 1-indexed in Graphs.jl.
+# """
+# function exchange_graph(Ms, Ss, n::Integer)
+#   G = SimpleDiGraph{UInt8}(n)
+#   d = Dict() # e => i, for each e ∈ E, st e ∈ Ss[i].
+#   for e in 0:n-1 d[e] = findfirst(S -> 1<<e&S == 1<<e, Ss) end
+
+#   # Checking for each i,j whether element ei can be replaced with ej.
+#   for (ei, ej) in Iterators.product(0:n-1, 0:n-1) if ei != ej
+#     # Find index of set containing ei.
+#     i = d[ei]
+
+#     # Generate ei-ej-replaced set.
+#     S´ = Ss[i] & ~(1<<ei) | 1<<ej
+
+#     # Check if rank_i(S_i - ei + ej) = rank_i(S_i)
+#     if rank(Ms[i], Ss[i]) == rank(Ms[i], S´)
+#       add_edge!(G, ei+1, ej+1) #+1 due to 1-indexing
+#     end
+#   end end 
+
+#   return (G, d)
+# end
+
+"""
+Constructs an exchange graph over `m` matroids (E, I_i) and `n` subsets
+A_i ⊆ E, given as an n x m BitMatrix A, where A[i,j] = 1 iff element 
+j ∈ A_i.
 
 The exchange graph is a graph whose vertices are the elements of E, and contains the edge (i,j) iff rank_i(S_i - i + j) = rank_i(S_i), where S_i is the set that contains i and rank_i the rank function for the corresponding matroid. In other words, it contains an edge (i,j) iff i can be replaced by j with no loss in rank.
-
-Returns the exchange graph G and a dictionary d that maps between each element of E and the set in Ss that contains it. 
-
-NB! Whereas the elements are the set {0, ..., n-1}, the nodes in the graph make up the set {1, ..., n}. That is, vertex v represents element v-1. This is because nodes are 1-indexed in Graphs.jl.
 """
-function exchange_graph(Ms, Ss, n::Integer)
-  G = SimpleDiGraph{UInt8}(n)
-  d = Dict() # e => i, for each e ∈ E, st e ∈ Ss[i].
-  for e in 0:n-1 d[e] = findfirst(S -> 1<<e&S == 1<<e, Ss) end
-
+function exchange_graph(Ms::Vector{T}, A::BitMatrix) where T <: Matroid
+  n, m = size(A)
+  @assert n == length(Ms); @assert m == Ms[1].n; @assert sum(A) == m
+  D = SimpleDiGraph(m)
+  
   # Checking for each i,j whether element ei can be replaced with ej.
-  for (ei, ej) in Iterators.product(0:n-1, 0:n-1) if ei != ej
+  for ei in 1:m, ej in setdiff(1:m, ei) 
     # Find index of set containing ei.
-    i = d[ei]
+    i = findfirst(==(1), A[:, ei])
 
     # Generate ei-ej-replaced set.
-    S´ = Ss[i] & ~(1<<ei) | 1<<ej
+    Ai´ = A[i, :]
+    Ai´[ei] = 0; Ai´[ej] = 1
 
-    # Check if rank_i(S_i - ei + ej) = rank_i(S_i)
-    if rank(Ms[i], Ss[i]) == rank(Ms[i], S´)
-      add_edge!(G, ei+1, ej+1) #+1 due to 1-indexing
+    # Check if rank_i(A_i - ei + ej) = rank_i(A_i)
+    if bv_rank(Ms[i], Ai´) == bv_rank(Ms[i], A[i, :])
+      add_edge!(D, ei, ej)
     end
-  end end 
+  end
 
-  return (G, d)
+  return D
 end
 
 

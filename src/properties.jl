@@ -98,7 +98,14 @@ rank(M::UniformMatroid, S) = rank(M, set_to_bits(S))
 
 rank(M::GraphicMatroid, S) = length(minimal_spanning_subset(M, S))
 
+"""
+    bv_rank(M::Matroid, S::BitVector)
 
+Finds the rank of a subset S of 1:m given as an m-length BitVector bv,
+where bv[i] == 1 iff i ∈ S.
+"""
+bv_rank(M::Matroid, bv::BitVector) = 
+  rank(M, [i for (i,e) in enumerate(bv) if e == 1])
 
 
 """

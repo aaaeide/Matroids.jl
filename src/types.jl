@@ -31,6 +31,7 @@ struct GraphicMatroid
 end
 
 FreeMatroid(n) = UniformMatroid(n, n)
+ZeroMatroid(n) = UniformMatroid(n, 0)
 
 
 Matroid = Union{ClosedSetsMatroid, FullMatroid, UniformMatroid, GraphicMatroid}

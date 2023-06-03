@@ -83,32 +83,49 @@ end
 end
 
 @testset "UniformMatroid properties" begin
-  M = UniformMatroid(10, 6)
+  U = UniformMatroid(10, 6)
+  F = FreeMatroid(10)
+  Z = ZeroMatroid(10)
 
-  @test is_indep(M, 0)
-  @test rank(M) == 6
+  @test is_indep(U, 0)
+  @test is_indep(F, 0)
+  @test is_indep(Z, 0)
+  @test rank(U) == 6
+  @test rank(F) == 10
+  @test rank(Z) == 0
 
   for i in 1:6
     S = randperm(10)[1:i]
-    @test is_indep(M, S) || S
-    @test is_circuit(M, S) == false || S
-    @test rank(M, S) == i || S
-    @test closure(M, S) == S || S
+    @test is_indep(U, S) || S
+    @test is_indep(F, S) || S
+    @test is_indep(Z, S) == false || S
+
+    @test is_circuit(U, S) == false || S
+    @test is_circuit(F, S) == false || S
+    @test is_circuit(Z, S) == (i == 1) || S
+
+    @test rank(U, S) == i || S
+    @test rank(F, S) == i || S
+    @test rank(Z, S) == 0 || S
+
+    @test closure(U, S) == S || S
+    @test closure(F, S) == S || S
+    @test closure(Z, S) == Set(1:10) || S
   end
 
   S = randperm(10)[1:7]
-  @test is_indep(M, S) == false || S
-  @test is_circuit(M, S) || S
-  @test rank(M, S) == 6 || S
-  @test closure(M, S) == Set(1:10) || S
+  @test is_indep(U, S) == false || S
+  @test is_circuit(U, S) || S
+  @test rank(U, S) == 6 || S
+  @test closure(U, S) == Set(1:10) || S
 
   
   for i in 8:10
     S = randperm(10)[1:i]
-    @test is_indep(M, S) == false || S
-    @test is_circuit(M, S) == false || S
-    @test rank(M, S) == 6 || S
-    @test closure(M, S) == Set(1:10) || S
+    @test is_indep(U, S) == false || S
+    @test is_circuit(U, S) == false || S
+    @test rank(U, S) == 6 || S
+    @test closure(U, S) == Set(1:10) || S
   end
 end
 

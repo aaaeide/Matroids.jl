@@ -213,6 +213,29 @@ function find_shortest_path(D, from, to)
 end
 
 
+"""
+    transfer!(A, i, path, D)
+
+Creates a new allocation from A, where the goods have between
+transferred along path, path[1] ending up in agent i's bundle. 
+
+Returns the augmented allocation and an updated exchange graph D.
+"""
+function transfer!(A, i, path)
+  # At every iteration, x receives the next good in the path.
+  x = i
+  for g in path
+    # y is the current owner, who loses g.
+    y = findfirst(==(1), A[:, g])
+    A[x, g] = 1; A[y, g] = 0
+    x = y
+  end
+
+  @assert sum(A) == size(A)[2]
+  return A
+end
+
+
 # """
 #     function find_transfer_path(G, d, Ms, Ss, i::Integer, j::Integer, n::Integer)
 
@@ -236,24 +259,24 @@ end
 # end
 
 
-function transfer!(i, p, Ms, Ss, d, n)
-  @assert p[1] == n+1 # The source node, not an element in E.
+# function transfer!(i, p, Ms, Ss, d, n)
+#   @assert p[1] == n+1 # The source node, not an element in E.
 
-  # Ss[i] receives p[2] for a marginal gain of 1.
-  Ss[i] |= 1<<(p[2]-1)
+#   # Ss[i] receives p[2] for a marginal gain of 1.
+#   Ss[i] |= 1<<(p[2]-1)
   
-  # For each path position j in 2:end-1, d[j] should lose p[j] and get p[j+1].
-  for j in 2:length(p)-1
-    r = rank(Ms[d[j]], Ss[d[j]])
-    Ss[d[j]] &= ~1<<(p[j]-1) # Lose an element.
-    Ss[d[j]] |= 1<<(p[j+1]-1) # Gain next element.
-    r´ = rank(Ms[d[j]], Ss[d[j]])
-    @assert r == r´
-  end
+#   # For each path position j in 2:end-1, d[j] should lose p[j] and get p[j+1].
+#   for j in 2:length(p)-1
+#     r = rank(Ms[d[j]], Ss[d[j]])
+#     Ss[d[j]] &= ~1<<(p[j]-1) # Lose an element.
+#     Ss[d[j]] |= 1<<(p[j+1]-1) # Gain next element.
+#     r´ = rank(Ms[d[j]], Ss[d[j]])
+#     @assert r == r´
+#   end
 
-  # The last set simply loses an element.
-  Ss[d[p[end]-1]] &= ~1<<(p[end]-1)
-end
+#   # The last set simply loses an element.
+#   Ss[d[p[end]-1]] &= ~1<<(p[end]-1)
+# end
 
 """
     function bfs(G, s, fn)

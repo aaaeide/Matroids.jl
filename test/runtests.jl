@@ -26,4 +26,5 @@ using Test
     include("bitset_utils.test.jl")
 
     include("fair_allocation/algorithms.test.jl")
+    include("fair_allocation/fairness.test.jl")
 end

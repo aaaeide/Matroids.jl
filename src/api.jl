@@ -3,47 +3,47 @@ using DataStructures
 using Memoize
 
 
-"""
-    function matroid_partition(Ms::Vector{Matroid})
+# """
+#     function matroid_partition(Ms::Vector{Matroid})
 
-Partitions a set of elements into k subsets independent in the k given matroids Ms. The matroids are assumed to be over the same ground set E.
+# Partitions a set of elements into k subsets independent in the k given matroids Ms. The matroids are assumed to be over the same ground set E.
 
-Wants to create an "even" partition; will at each step enlarge the set Ss[i], where Ss[i] is not a basis and is of smallest cardinality among the sets in Ss.
-"""
-function matroid_partition(Ms::Vector{Matroid})
-  k = length(Ms); n = Ms[1].n
+# Wants to create an "even" partition; will at each step enlarge the set Ss[i], where Ss[i] is not a basis and is of smallest cardinality among the sets in Ss.
+# """
+# function matroid_partition(Ms::Vector{Matroid})
+#   k = length(Ms); n = Ms[1].n
 
-  # Initially, all k subsets are empty, and the "pot" is full.
-  Ss = push!(zeros(UInt16, k), 2^n-1)
-  push!(Ms, FreeMatroid(n))
+#   # Initially, all k subsets are empty, and the "pot" is full.
+#   Ss = push!(zeros(UInt16, k), 2^n-1)
+#   push!(Ms, FreeMatroid(n))
   
-  # can_grow[i] == true iff Ss[i] is not a basis in Ms[i].
-  can_grow = trues(k)
-  while true in can_grow
-    # Find the index i of the first set of least cardinality.
-    smallest = n+1; i = -1
-    for p in 1:k if can_grow[p]
-      card = Base.count_ones(Ss[p])
-      if card < smallest
-        smallest = card; i = p
-      end
-    end end
+#   # can_grow[i] == true iff Ss[i] is not a basis in Ms[i].
+#   can_grow = trues(k)
+#   while true in can_grow
+#     # Find the index i of the first set of least cardinality.
+#     smallest = n+1; i = -1
+#     for p in 1:k if can_grow[p]
+#       card = Base.count_ones(Ss[p])
+#       if card < smallest
+#         smallest = card; i = p
+#       end
+#     end end
 
-    Ss |> pb
-    readline()
+#     Ss |> pb
+#     readline()
 
-    G, d = exchange_graph(Ms, Ss, n)
-    path = find_transfer_path(G, d, Ms, Ss, n, i, k+1)
-    if path == false
-       can_grow[i] = false
-    else
-      transfer!(i, path, Ms, Ss, d, n)
-    end
-  end
+#     G, d = exchange_graph(Ms, Ss, n)
+#     path = find_transfer_path(G, d, Ms, Ss, n, i, k+1)
+#     if path == false
+#        can_grow[i] = false
+#     else
+#       transfer!(i, path, Ms, Ss, d, n)
+#     end
+#   end
 
-  popat!(Ms, k+1) # Cleanup.
-  return Ss
-end
+#   popat!(Ms, k+1) # Cleanup.
+#   return Ss
+# end
 
 
 

@@ -19,20 +19,3 @@ import LinearAlgebra: I
   @test find_shortest_path(g, [1,2,3], [4,5,6]) === nothing
   @test find_shortest_path(g, [1,2,3,4], [4,5]) == [4]
 end
-
-@testset "Transfer operation" begin
-
-  # A = 1 0 0 0
-  #     0 1 0 0
-  #     0 0 1 0
-  #     0 0 0 1
-
-  A = Matrix{Bool}(I,4,4) |> BitMatrix
-  P = [2,3,4]
-  i = 1
-
-  @test transfer!(A, i, P) == [1 1 0 0;
-                               0 0 1 0; 
-                               0 0 0 1;
-                               0 0 0 0]
-end

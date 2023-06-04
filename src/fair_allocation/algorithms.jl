@@ -20,7 +20,6 @@ function alloc_yankee_swap_vz22(V::MatroidRank)
 
   # Agent 0 has a corresponding zero matroid.
   D = exchange_graph(Ms´, A)
-  println(outneighbors(D, 1))
 
   while false in flag
     # The agents whose bundle can still improve.
@@ -40,12 +39,6 @@ function alloc_yankee_swap_vz22(V::MatroidRank)
     # Find a shortest path from F_i to an unallocated good.
     A_0 = [j for j in 1:m if A[n+1, j] == 1]
     transfer_path = find_shortest_path(D, F_i, A_0)
-
-    display(A)
-    println([(i, bv_rank(Ms´[i], A[i, :])) for i in 1:n+1])
-    println("i = $i\tp=$transfer_path")
-    readline()
-
 
     # Transfer if path exists.
     if transfer_path !== nothing

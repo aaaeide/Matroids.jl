@@ -38,7 +38,7 @@ value_x(V::MatroidRank, i, A) = value_1(V, i, A)
 
 # If S is independent for M_i, the least valued good in S has value 1, else 0.
 value_x0(V::MatroidRank, i, A) =
-    is_indep(V.matroids[i], A) ? value_1(V, i, A) : value(V, i, A)
+    is_indep(V.Ms[i], A) ? value_1(V, i, A) : value(V, i, A)
 
 
 ## THRESHOLDS #######################################################
@@ -49,7 +49,7 @@ value_x0(V::MatroidRank, i, A) =
 The proportional share of agent `i`, that is, the value `i` places on the set 
 of all goods, divided by the numder of agents.
 """
-prop(V::MatroidRank, i, _) = rank(V.matroids[i])/na(V)
+prop(V::MatroidRank, i, _) = rank(V.Ms[i])/na(V)
 
 """
     prop_1(V::Profile, i, S)
@@ -73,15 +73,16 @@ The proportional share of agent `i`, minus a least-valued (possibly 0-valued)
 item not allocated to `i`.
 """
 prop_x0(V::MatroidRank, i, A) = 
-    is_closed(V.matroids[i], A) ? prop_1(V, i, A) : prop(V, i, A)
+    is_closed(V.Ms[i], A) ? prop_1(V, i, A) : prop(V, i, A)
 
 """
-    function mms_i(Mi, n)
+    function mms_i(V, i)
 
-Finds the maximin share of agent i with corresponding
-matroid Mi, for an instance with n agents.
+Finds the maximin share of agent i in the instance V.
 """
-function mms_i(M_i, n)
+function mms_i(V::MatroidRank, i)
+  M_i = V.Ms[i]; n = na(V)
+
   # An initial partition into independent subsets (subjectively so for i).
   A = matroid_partition_knuth73([M_i for _ in 1:n])
 

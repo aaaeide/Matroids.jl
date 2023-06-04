@@ -57,6 +57,9 @@ function is_indep(m::GraphicMatroid, S)
   return !is_cyclic(subgraph)
 end
 
+bv_is_indep(m::Matroid, bv::BitVector) = 
+  is_indep(m, [i for (i,e) in enumerate(bv) if e == 1])
+
 
 
 

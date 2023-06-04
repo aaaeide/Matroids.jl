@@ -13,7 +13,7 @@ end
     @test value(V, i, A) == 1
   end
 
-  V = MatroidRank([random_knuth_matroid(16, [0,6]) for _ in 1:7], 16)
+  V = MatroidRank([random_knuth_matroid(16, [0,6,3,2]) for _ in 1:7], 16)
   A = alloc_yankee_swap_vz22(V)
   @test check_ef1(V, A)
   @test check_efx(V, A)

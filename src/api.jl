@@ -155,7 +155,7 @@ end
 """
 Constructs an exchange graph over `m` matroids (E, I_i) and `n` subsets
 A_i ⊆ E, given as an n x m BitMatrix A, where A[i,j] = 1 iff element 
-j ∈ A_i.
+j ∈ A_i. It is assumed each A_i is independent in M_i.
 
 The exchange graph is a graph whose vertices are the elements of E, and contains the edge (i,j) iff rank_i(S_i - i + j) = rank_i(S_i), where S_i is the set that contains i and rank_i the rank function for the corresponding matroid. In other words, it contains an edge (i,j) iff i can be replaced by j with no loss in rank.
 """
@@ -173,8 +173,8 @@ function exchange_graph(Ms::Vector{T}, A::BitMatrix) where T <: Matroid
     Ai´ = A[i, :]
     Ai´[ei] = 0; Ai´[ej] = 1
 
-    # Check if rank_i(A_i - ei + ej) = rank_i(A_i)
-    if bv_rank(Ms[i], Ai´) == bv_rank(Ms[i], A[i, :])
+    # Check if A_i - ei + ej is independent in Mi.
+    if bv_is_indep(Ms[i], Ai´)
       add_edge!(D, ei, ej)
     end
   end
@@ -217,22 +217,34 @@ end
     transfer!(A, i, path, D)
 
 Creates a new allocation from A, where the goods have between
-transferred along path, path[1] ending up in agent i's bundle. 
+transferred along path, path[1] ending up in agent i's bundle.
+It is assumed the allocation in A is clean, ie. each A_i is
+independent in M_i.
 
 Returns the augmented allocation and an updated exchange graph D.
 """
-function transfer!(A, i, path)
+function transfer!(Ms, D, A, i, path)
   # At every iteration, x receives the next good in the path.
   x = i
   for g in path
     # y is the current owner, who loses g.
     y = findfirst(==(1), A[:, g])
     A[x, g] = 1; A[y, g] = 0
+
+    # Recalculate neighbors of g in D.
+    for g´ in vertices(D)
+      # Generate g-g´-replaced set.
+      Ax´ = A[x, :]
+      Ax´[g] = 0; Ax´[g´] = 1
+
+      # Add edge (g,g´) if g´ can replace g.
+      if bv_is_indep(Ms[i], Ax´)
+        add_edge!(D, g, g´)
+      end
+    end
+
     x = y
   end
-
-  @assert sum(A) == size(A)[2]
-  return A
 end
 
 

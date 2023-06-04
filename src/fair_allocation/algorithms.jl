@@ -11,16 +11,20 @@ end
 Viswanathan and Zick's Yankee Swap algorithm (2022) for matroid-rank valuations. The agents are prioritized according to index.
 """
 function alloc_yankee_swap_vz22(V::MatroidRank)
-  A = falses(na(V)+1, ni(V))
-  A[na(V)+1, :] .= 1 # The bundle of unallocated items.
-  flag = falses(na(V))
+  n = na(V); m = ni(V)
+  Ms´ = [V.Ms..., ZeroMatroid(m)]
+
+  A = falses(n+1, m)
+  A[n+1, :] .= 1 # The bundle of unallocated items.
+  flag = falses(n)
 
   # Agent 0 has a corresponding zero matroid.
-  D = exchange_graph([V.matroids..., ZeroMatroid(ni(V))], A)
+  D = exchange_graph(Ms´, A)
+  println(outneighbors(D, 1))
 
   while false in flag
     # The agents whose bundle can still improve.
-    T = [i for i in 1:na(V) if flag[i] == false]
+    T = [i for i in 1:n if flag[i] == false]
     
     # Find the agents in T with minimim value.
     T_vals = [(i, value(V, i, bv_to_bundle(A[i, :]))) for i in T]
@@ -31,22 +35,28 @@ function alloc_yankee_swap_vz22(V::MatroidRank)
     i = T´[1] 
 
     # The goods for which i has positive marginal value.
-    F_i = [j for j in 1:ni(V) if Δ(V, i, A, j) == 1]
+    F_i = [j for j in 1:m if Δ(V, i, A, j) == 1]
 
     # Find a shortest path from F_i to an unallocated good.
-    A_0 = [j for j in 1:ni(V) if A[na(V)+1, j] == 1]
+    A_0 = [j for j in 1:m if A[n+1, j] == 1]
     transfer_path = find_shortest_path(D, F_i, A_0)
+
+    display(A)
+    println([(i, bv_rank(Ms´[i], A[i, :])) for i in 1:n+1])
+    println("i = $i\tp=$transfer_path")
+    readline()
+
 
     # Transfer if path exists.
     if transfer_path !== nothing
-      transfer!(A, i, transfer_path)
+      transfer!(Ms´, D, A, i, transfer_path)
     else
       flag[i] = true
     end
   end
 
-  alloc = Allocation(na(V), ni(V))
-  for i in 1:na(V), j in 1:ni(V)
+  alloc = Allocation(n, m)
+  for i in 1:n, j in 1:m
     if A[i,j] give!(alloc, i, j) end
   end
   
@@ -65,8 +75,8 @@ function alloc_eit_bciz21(V::MatroidRank)
   n = na(V); m = ni(V)
 
   # Compute a clean, MAX-USW allocation.
-  partition = matroid_partition_knuth73(V.matroids)
-  A = Allocation(na(V), ni(V))
+  partition = matroid_partition_knuth73(V.Ms)
+  A = Allocation(n, m)
   for (i, bundle) in enumerate(partition)
     give!(A, i, bundle)
   end
@@ -104,4 +114,38 @@ function alloc_eit_bciz21(V::MatroidRank)
   end
 
   return A
+end
+
+
+"""
+    alloc_algmms_bv21(V::MatroidRank)
+
+Barman and Verma's ALGMMS (2021), which computes a utilitarian
+social welfare-maximizing and MMS-fair allocation.
+"""
+function alloc_algmms_bv21(V::MatroidRank)
+  n = na(V); m = ni(V)
+
+  # Compute a clean, MAX-USW allocation.
+  partition = matroid_partition_knuth73(V.Ms)
+  A = Allocation(n, m)
+  for (i, bundle) in enumerate(partition)
+    give!(A, i, bundle)
+  end
+
+  # Compute MMS of each agent.
+  mmss = [mms_i(V, i) for i in 1:n]
+
+  S_less = [i for i in 1:n if value(V, i, A) < mms[i]]
+  S_more = [i for i in 1:n if value(V, i, A) > mms[i]]
+
+  while length(S_less) > 0
+    # i is an agent with less than their maximin share.
+    i = popfirst!(S_less)
+
+    # The goods for which i has positive marginal value.
+    F_i = [j for j in 1:m if is_indep(V.Ms[i], bundle(A, i) ∪ j)]
+
+
+  end
 end

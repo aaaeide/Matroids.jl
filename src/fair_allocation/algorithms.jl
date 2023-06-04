@@ -10,7 +10,7 @@ end
 
 Viswanathan and Zick's Yankee Swap algorithm (2022) for matroid-rank valuations. The agents are prioritized according to index.
 """
-function yankee_swap(V::MatroidRank)
+function alloc_yankee_swap_vz22(V::MatroidRank)
   A = falses(na(V)+1, ni(V))
   A[na(V)+1, :] .= 1 # The bundle of unallocated items.
   flag = falses(na(V))
@@ -61,7 +61,7 @@ end
 The Envy-Induced Transfer algorithm, Algorithm 1 in Benabbou, Chakraborty, Igarashi and Zick (2021) computes a MAX-USW, EF1 
 allocation.
 """
-function alloc_bciz21(V::MatroidRank)
+function alloc_eit_bciz21(V::MatroidRank)
   n = na(V); m = ni(V)
 
   # Compute a clean, MAX-USW allocation.

@@ -48,7 +48,7 @@ end
 
 
 """
-    matroid_partition_knuth_73(Ms, lims=nothing)
+    matroid_partition_knuth73(Ms, lims=nothing)
 
 
 Knuth's 1973 Matroid Partitioning algorithm for partitioning a set into subsets independent in various given matroids.
@@ -57,7 +57,7 @@ Knuth's description: Given k matroids Ms = [M1, ..., Mk] on the same ground set 
 
 This implementation drops the upper limit nj´ for each element j (implicitly it is infinity for all matroids). Supply nj in array lims (lims[j] = nj).
 """
-function matroid_partition_knuth_73(Ms, lims=nothing)
+function matroid_partition_knuth73(Ms, lims=nothing)
   n = Ms[1].n; k = length(Ms)
   S0 = Set(1:n) # The unallocated items.
   S = [Set() for _ in 1:k] # The partition-to-be.

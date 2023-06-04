@@ -48,3 +48,53 @@ function yankee_swap(V::MatroidRank)
   
   return alloc
 end
+
+
+
+"""
+    alloc_bciz21(V::MatroidRank)
+
+The Envy-Induced Transfer algorithm, Algorithm 1 in Benabbou, Chakraborty, Igarashi and Zick (2021) computes a MAX-USW, EF1 
+allocation.
+"""
+function alloc_bciz21(V::MatroidRank)
+  n = na(V); m = ni(V)
+
+  # Compute a clean, MAX-USW allocation.
+  partition = matroid_partition_knuth73(V.matroids)
+  A = Allocation(na(V), ni(V))
+  for (i, bundle) in enumerate(partition)
+    give!(A, i, bundle)
+  end
+
+  # D[i,j] holds v_i(A_i) - v_i(A_j).
+  D = zeros(Int, n, n)
+  for i in 1:n, j in 1:n
+    D[i,j] = value(V, i, A; indep=true) - value(V, i, bundle(A, j))
+  end
+
+  # While there are agents i, j st i envies j more than 1...
+  i,j = argmax(D) |> Tuple
+  while D[i,j] > 1
+    # Find item in A_j with marginal gain for i.
+    o = findfirst(g -> Δ(V, A, i, g) == 1, collect(bundle(A, j)))
+
+    # TROUBLE: o is nothing?? How can D[i,j] > 1 then?
+    
+    # Envy-induced transfer:
+    deny!(A, j, o)
+    give!(A, i, o)
+
+    # Update D.
+    for k in 1:n
+      D[i, k] = value(V, i, A; indep=true) - value(V, i, bundle(A, k))
+      D[k, i] = value(V, k, A; indep=true) - value(V, k, bundle(A, i))
+      D[j, k] = value(V, j, A; indep=true) - value(V, j, bundle(A, k))
+      D[k, j] = value(V, k, A; indep=true) - value(V, k, bundle(A, j))
+    end
+
+    i,j = argmax(D) |> Tuple
+  end
+
+  return A
+end

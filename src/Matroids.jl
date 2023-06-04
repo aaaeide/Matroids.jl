@@ -26,5 +26,5 @@ export knuth_matroid, random_knuth_matroid, erect_v1
 
 export MatroidRank, na, ni, value
 export check_ef, check_ef1, check_efx, check_efx0, check_prop, check_prop1, check_propx, check_propx0, mms_i
-export yankee_swap
+export yankee_swap, alloc_bciz21
 end

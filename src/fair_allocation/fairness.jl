@@ -83,7 +83,7 @@ matroid Mi, for an instance with n agents.
 """
 function mms_i(M_i, n)
   # An initial partition into independent subsets (subjectively so for i).
-  A = matroid_partition_knuth_73([M_i for _ in 1:n])
+  A = matroid_partition_knuth73([M_i for _ in 1:n])
 
   # Setup matrix D st D[j,k] v_i(A_j) - v_i(A_k) ∀ j,k ∈ [n].
   D = zeros(Int8, n, n)

@@ -21,10 +21,11 @@ include("fair_allocation/algorithms.jl")
 
 export Matroid, ZeroMatroid, FreeMatroid, UniformMatroid, ClosedSetsMatroid, GraphicMatroid
 export is_indep, rank, is_circuit, minimal_spanning_subset, minimal_spanning_subsets, bases, closure
+export matroid_partition_knuth73, matroid_partition
 
 export knuth_matroid, random_knuth_matroid, erect_v1
 
 export MatroidRank, na, ni, value
 export check_ef, check_ef1, check_efx, check_efx0, check_prop, check_prop1, check_propx, check_propx0, mms_i
-export alloc_yankee_swap_vz22, alloc_bciz21
+export alloc_yankee_swap_vz22, alloc_eit_bciz21, alloc_algmms_bv21
 end

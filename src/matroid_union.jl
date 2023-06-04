@@ -100,11 +100,13 @@ end
 
 Knuth's 1973 Matroid Partitioning algorithm for partitioning a set into subsets independent in various given matroids.
 
-Knuth's description: Given k matroids Ms = [M1, ..., Mk] on the same ground set E, the algorithm finds a k-partitioning [S1, ..., Sk] of the elements of E such that Sj is independent in matroid Mj, and nj <= |Sj| <= nj´, for given limits nj and nj´. 
+Knuth's description: Given k matroids Ms = [M1, ..., Mk] on the same ground set E, the algorithm finds a k-partitioning S = [S1, ..., Sk] of the elements of E such that Sj is independent in matroid Mj, and nj <= |Sj| <= nj´, for given limits nj and nj´. 
+
+Returns the tuple (S, X), where X is the set of any elements that didn't fit into any independent set.
 
 This implementation drops the upper limit nj´ for each element j (implicitly it is infinity for all matroids). Supply nj in array lims (lims[j] = nj).
 """
-function matroid_partition_knuth73(Ms, lims=nothing)
+function matroid_partition_knuth73(Ms, floors=nothing)
   n = Ms[1].n; k = length(Ms)
   S0 = Set(1:n) # The unallocated items.
   S = [Set() for _ in 1:k] # The partition-to-be.
@@ -112,13 +114,14 @@ function matroid_partition_knuth73(Ms, lims=nothing)
   for y in 1:k color[-y] = y end # -y is the 'standard' element of color y.
   succ = [0 for _ in 1:n]
 
-  lims = lims === nothing ? [0 for _ in 1:k] : lims
+  floors = floors === nothing ? [0 for _ in 1:k] : floors
+  ceils = [rank(Ms[i]) for i in 1:k]
 
   function augment(r)
     for x in 1:n succ[x] = 0 end
     
     A = Set(1:n)
-    B = r > 0 ? Set(-r) : Set(-j for j in 1:k)
+    B = r > 0 ? Set(-r) : Set(-j for j in 1:k if length(S[j])<=ceils[j])
     
     while B != Set()
       C = Set()
@@ -126,16 +129,18 @@ function matroid_partition_knuth73(Ms, lims=nothing)
         j = color[y]
 
         if is_indep(Ms[j], x ∪ setdiff(S[j], y))
+          println("repainting? $(x ∪ setdiff(S[j], y)) is indep in Ms[$j]")
           succ[x] = y
           A = setdiff(A, x)
           C = C ∪ x
-          if color[x] == 0 repaint(x); return end
+          if color[x] == 0 repaint(x); return Set() end
         end
       end end
       B = C
     end
 
-    println("$A violates the condition of Theorem 3")
+    # Remaining elements in A are not allocateable into independent sets.
+    return A
   end
 
   function repaint(x)
@@ -143,9 +148,13 @@ function matroid_partition_knuth73(Ms, lims=nothing)
       y = succ[x]
       j = color[x]
       
-      if j == 0 setdiff!(S0, x) else setdiff!(S[j], x) end
+      println("REPAINTING FROM $x ∈ $j -> $y ∈ $(color[y])")
+      println(S)
       
+      if j == 0 setdiff!(S0, x) else setdiff!(S[j], x) end
+
       j = color[y]
+      println("S[$j] = $(S[j]) receiving $x")
       S[j] = S[j] ∪ x
       color[x] = j
       x = y
@@ -153,14 +162,18 @@ function matroid_partition_knuth73(Ms, lims=nothing)
   end
 
   # Ensure every part gets at least its lower limit.
-  for j in 1:k for _ in 1:lims[j]
+  for j in 1:k, i in 1:floors[j]
     augment(j)
-  end end
+  end
 
   # Allocate the rest.
   while S0 != Set()
-    augment(0)
+    X = augment(0)
+    
+    if length(X) != 0
+      return (S, X)
+    end
   end
 
-  return S
+  return (S, Set())
 end

@@ -12,13 +12,13 @@ Viswanathan and Zick's Yankee Swap algorithm (2022) for matroid-rank valuations.
 """
 function alloc_yankee_swap_vz22(V::MatroidRank)
   n = na(V); m = ni(V)
+  # Agent "0" (n+1) has a corresponding zero matroid.
   Ms´ = [V.Ms..., ZeroMatroid(m)]
 
   A = Allocation(n+1, m)
   give!(A, n+1, 1:m) # The bundle of unallocated items.
   flag = falses(n)
 
-  # Agent 0 has a corresponding zero matroid.
   D = exchange_graph(Ms´, A)
 
   while false in flag
@@ -36,7 +36,7 @@ function alloc_yankee_swap_vz22(V::MatroidRank)
     # The goods for which i has positive marginal value.
     F_i = [g for g in 1:m if Δ(V, A, i, g) == 1]
 
-    # Find a shortest path from F_i to an unallocated good.
+    #  a shortest path from F_i to an unallocated good.
     A_0 = [g for g in 1:m if owner(A, g) == n+1]
     transfer_path = find_shortest_path(D, F_i, A_0)
 
@@ -54,7 +54,7 @@ end
 
 
 """
-    alloc_bciz21(V::MatroidRank)
+    alloc_eit_bciz21(V::MatroidRank)
 
 The Envy-Induced Transfer algorithm, Algorithm 1 in Benabbou, Chakraborty, Igarashi and Zick (2021) computes a MAX-USW, EF1 
 allocation.
@@ -63,7 +63,7 @@ function alloc_eit_bciz21(V::MatroidRank)
   n = na(V); m = ni(V)
 
   # Compute a clean, MAX-USW allocation.
-  partition = matroid_partition_knuth73(V.Ms)
+  (partition, _junk) = matroid_partition_knuth73(V.Ms)
   A = Allocation(n, m)
   for (i, bundle) in enumerate(partition)
     give!(A, i, bundle)
@@ -114,8 +114,8 @@ social welfare-maximizing and MMS-fair allocation.
 function alloc_algmms_bv21(V::MatroidRank)
   n = na(V); m = ni(V)
 
-  # Compute a clean, MAX-USW allocation.
-  partition = matroid_partition_knuth73(V.Ms)
+  # Compute a clean, (partial) MAX-USW allocation.
+  (partition, _junk) = matroid_partition_knuth73(V.Ms)
   A = Allocation(n, m)
   for (i, bundle) in enumerate(partition)
     give!(A, i, bundle)
@@ -124,8 +124,10 @@ function alloc_algmms_bv21(V::MatroidRank)
   # Compute MMS of each agent.
   mmss = [mms_i(V, i) for i in 1:n]
 
-  S_less = [i for i in 1:n if value(V, i, A) < mms[i]]
-  S_more = [i for i in 1:n if value(V, i, A) > mms[i]]
+  S_less = [i for i in 1:n if value(V, i, A) < mmss[i]]
+  S_more = [i for i in 1:n if value(V, i, A) > mmss[i]]
+
+  D = exchange_graph(V.Ms, A)
 
   while length(S_less) > 0
     # i is an agent with less than their maximin share.
@@ -135,6 +137,20 @@ function alloc_algmms_bv21(V::MatroidRank)
     F_i = [g for g in 1:m if is_indep(V.Ms[i], bundle(A, i) ∪ g)]
     A_more = reduce(∪, [bundle(A, j) for j in S_more])
 
+    transfer_path = find_shortest_path(D, F_i, A_more)
+    @assert transfer_path !== nothing
 
+    j = owner(A, transfer_path[end]) # The losing agent.
+    
+    transfer!(V.Ms, D, A, i, transfer_path)
+
+    # Only i and j have received a new value.
+    S_less = [i for i in 1:n if value(V, i, A) < mmss[i]]
+    S_more = [i for i in 1:n if value(V, i, A) > mmss[i]]
   end
+
+  # Give agent 1 any unallocated items (these are 0-valued by everyone).
+  junk = setdiff(1:m, reduce(∪, [bundle(A, j) for j in 1:n]))
+  give!(A, 1, junk)
+  return A
 end

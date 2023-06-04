@@ -84,7 +84,7 @@ function mms_i(V::MatroidRank, i)
   M_i = V.Ms[i]; n = na(V)
 
   # An initial partition into independent subsets (subjectively so for i).
-  A = matroid_partition_knuth73([M_i for _ in 1:n])
+  (A, _) = matroid_partition_knuth73([M_i for _ in 1:n])
 
   # Setup matrix D st D[j,k] v_i(A_j) - v_i(A_k) ∀ j,k ∈ [n].
   D = zeros(Int8, n, n)

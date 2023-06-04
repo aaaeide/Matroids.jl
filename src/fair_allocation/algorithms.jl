@@ -14,8 +14,8 @@ function alloc_yankee_swap_vz22(V::MatroidRank)
   n = na(V); m = ni(V)
   Ms´ = [V.Ms..., ZeroMatroid(m)]
 
-  A = falses(n+1, m)
-  A[n+1, :] .= 1 # The bundle of unallocated items.
+  A = Allocation(n+1, m)
+  give!(A, n+1, 1:m) # The bundle of unallocated items.
   flag = falses(n)
 
   # Agent 0 has a corresponding zero matroid.
@@ -26,7 +26,7 @@ function alloc_yankee_swap_vz22(V::MatroidRank)
     T = [i for i in 1:n if flag[i] == false]
     
     # Find the agents in T with minimim value.
-    T_vals = [(i, value(V, i, bv_to_bundle(A[i, :]))) for i in T]
+    T_vals = [(i, value(V, i, bundle(A, i))) for i in T]
     min_val = minimum(last, T_vals)
     T´ = [i for (i, v) in T_vals if v == min_val]
 
@@ -34,10 +34,10 @@ function alloc_yankee_swap_vz22(V::MatroidRank)
     i = T´[1] 
 
     # The goods for which i has positive marginal value.
-    F_i = [j for j in 1:m if Δ(V, i, A, j) == 1]
+    F_i = [g for g in 1:m if Δ(V, A, i, g) == 1]
 
     # Find a shortest path from F_i to an unallocated good.
-    A_0 = [j for j in 1:m if A[n+1, j] == 1]
+    A_0 = [g for g in 1:m if owner(A, g) == n+1]
     transfer_path = find_shortest_path(D, F_i, A_0)
 
     # Transfer if path exists.
@@ -47,13 +47,8 @@ function alloc_yankee_swap_vz22(V::MatroidRank)
       flag[i] = true
     end
   end
-
-  alloc = Allocation(n, m)
-  for i in 1:n, j in 1:m
-    if A[i,j] give!(alloc, i, j) end
-  end
   
-  return alloc
+  return A
 end
 
 
@@ -137,7 +132,8 @@ function alloc_algmms_bv21(V::MatroidRank)
     i = popfirst!(S_less)
 
     # The goods for which i has positive marginal value.
-    F_i = [j for j in 1:m if is_indep(V.Ms[i], bundle(A, i) ∪ j)]
+    F_i = [g for g in 1:m if is_indep(V.Ms[i], bundle(A, i) ∪ g)]
+    A_more = reduce(∪, [bundle(A, j) for j in S_more])
 
 
   end

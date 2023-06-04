@@ -6,7 +6,7 @@ using Test
     include("../src/bitset_utils.jl")
 
     include("../src/properties.jl")
-    include("../src/api.jl")
+    include("../src/matroid_union.jl")
     
     include("../src/constructions/knuth.jl")
     include("../src/constructions/erect.jl")
@@ -21,7 +21,7 @@ using Test
     include("constructions/erect.test.jl")
 
     include("properties.test.jl")
-    include("api.test.jl")
+    include("matroid_union.test.jl")
 
     include("bitset_utils.test.jl")
 

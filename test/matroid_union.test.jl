@@ -1,11 +1,16 @@
 using Graphs
-import LinearAlgebra: I
+using Allocations
 
 @testset "Exchange graphs and transfer paths" begin
   # Every agent likes every item.
   matroids = [FreeMatroid(5) for _ in 1:5]
+  
   # Every agent has 1 item.
-  A = Matrix{Bool}(I, 5, 5) |> BitMatrix
+  A = Allocation(5,5)
+  for i in 1:5
+    give!(A, i, i)
+  end
+
   # Every item should be exchangeable with every other item.
   @test exchange_graph(matroids, A) == complete_digraph(5)
 

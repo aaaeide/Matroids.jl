@@ -1,6 +1,10 @@
 using Graphs
 using Allocations
 
+function bv_to_bundle(bv::BitVector)
+  return Set([i for (i,j) in enumerate(bv) if j == 1])
+end
+
 """
     yankee_swap(V::MatroidRank)
 
@@ -19,7 +23,7 @@ function yankee_swap(V::MatroidRank)
     T = [i for i in 1:na(V) if flag[i] == false]
     
     # Find the agents in T with minimim value.
-    T_vals = [(i, value(V, i, A[i, :])) for i in T]
+    T_vals = [(i, value(V, i, bv_to_bundle(A[i, :]))) for i in T]
     min_val = minimum(last, T_vals)
     T´ = [i for (i, v) in T_vals if v == min_val]
 
@@ -67,30 +71,33 @@ function alloc_bciz21(V::MatroidRank)
     give!(A, i, bundle)
   end
 
-  # D[i,j] holds v_i(A_i) - v_i(A_j).
+  # Envy table D[i,j] holds i's envy towards j, v_i(A_j) - v_i(A_i).
   D = zeros(Int, n, n)
   for i in 1:n, j in 1:n
-    D[i,j] = value(V, i, A; indep=true) - value(V, i, bundle(A, j))
+    # We use length when we know the bundles are independent.
+    D[i,j] = value(V, i, bundle(A, j)) - length(bundle(A, i))
   end
 
   # While there are agents i, j st i envies j more than 1...
   i,j = argmax(D) |> Tuple
   while D[i,j] > 1
     # Find item in A_j with marginal gain for i.
-    o = findfirst(g -> Δ(V, A, i, g) == 1, collect(bundle(A, j)))
-
-    # TROUBLE: o is nothing?? How can D[i,j] > 1 then?
+    for o in bundle(A,j)
+      if Δ(V, A, i, o) == 1
+        # Envy-induced transfer:
+        deny!(A, j, o)
+        give!(A, i, o)
     
-    # Envy-induced transfer:
-    deny!(A, j, o)
-    give!(A, i, o)
+        # Update D.
+        for k in 1:n
+          D[i, k] = value(V, i, bundle(A, k)) - length(bundle(A, i))
+          D[k, i] = value(V, k, bundle(A, i)) - length(bundle(A, k))
+          D[j, k] = value(V, j, bundle(A, k)) - length(bundle(A, j))
+          D[k, j] = value(V, k, bundle(A, j)) - length(bundle(A, k))
+        end
 
-    # Update D.
-    for k in 1:n
-      D[i, k] = value(V, i, A; indep=true) - value(V, i, bundle(A, k))
-      D[k, i] = value(V, k, A; indep=true) - value(V, k, bundle(A, i))
-      D[j, k] = value(V, j, A; indep=true) - value(V, j, bundle(A, k))
-      D[k, j] = value(V, k, A; indep=true) - value(V, k, bundle(A, j))
+        break
+      end
     end
 
     i,j = argmax(D) |> Tuple

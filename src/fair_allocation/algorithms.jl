@@ -1,4 +1,5 @@
 using Graphs
+using Allocations
 
 """
     yankee_swap(V::MatroidRank)
@@ -40,5 +41,10 @@ function yankee_swap(V::MatroidRank)
     end
   end
 
-  return A
+  alloc = Allocation(na(V), ni(V))
+  for i in 1:na(V), j in 1:ni(V)
+    if A[i,j] give!(alloc, i, j) end
+  end
+  
+  return alloc
 end

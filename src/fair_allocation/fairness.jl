@@ -1,4 +1,5 @@
 using  Allocations
+import Allocations: check_ef_, check_ef, check_ef1, check_efx
 
 ## CHECKS ###########################################################
 
@@ -14,6 +15,16 @@ function check_thresh(V, A, thresh)
 
     return true
 end
+
+check_prop(V::MatroidRank, A) = check_thresh(V, A, prop)
+check_prop1(V::MatroidRank, A) = check_thresh(V, A, prop_1)
+check_propx(V::MatroidRank, A) = check_thresh(V, A, prop_x)
+check_propx0(V::MatroidRank, A) = check_thresh(V, A, prop_x0)
+
+check_ef(V::MatroidRank, A) = check_ef_(V, A, value)
+check_ef1(V::MatroidRank, A) = check_ef_(V, A, value_1)
+check_efx(V::MatroidRank, A) = check_ef_(V, A, value_x)
+check_efx0(V::MatroidRank, A) = check_ef_(V, A, value_x0)
 
 ## ENVY-FREENESS ####################################################
 
@@ -67,7 +78,8 @@ prop_x0(V::MatroidRank, i, A) =
 """
     function mms_i(Mi, n)
 
-Finds the maximin share of agent i for a fair allocation instance with matroid-rank valuations, given matroid Mi and the number of agents n.
+Finds the maximin share of agent i with corresponding
+matroid Mi, for an instance with n agents.
 """
 function mms_i(M_i, n)
   # An initial partition into independent subsets (subjectively so for i).

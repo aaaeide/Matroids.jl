@@ -9,13 +9,15 @@ end
   V1 = MatroidRank([FreeMatroid(m) for _ in 1:n], m)
   V2 = MatroidRank([random_knuth_matroid(16, [0,6,3,2]) for _ in 1:7], 16)
 
-  g1 = SimpleGraph{Int64}(5, [[2, 3], [1, 3], [1, 2], [4],    [5]])
-  g2 = SimpleGraph{Int64}(5, [[1],    [3, 4], [2, 4], [2, 3], [5]])
-  g3 = SimpleGraph{Int64}(5, [[1],    [2],    [4, 5], [3, 5], [3, 4]])
+  # This scenario results in some non-trivial transfer paths, and includes 
+  # an element no agent likes.
+  g1 = SimpleGraph{Int64}(6, [[2, 3], [1, 3], [1, 2], [4],    [5],    [6]])
+  g2 = SimpleGraph{Int64}(6, [[1],    [3, 4], [2, 4], [2, 3], [5],    [6]])
+  g3 = SimpleGraph{Int64}(6, [[1],    [2],    [4, 5], [3, 5], [3, 4], [6]])
 
   ms = [GraphicMatroid(g1), GraphicMatroid(g2), GraphicMatroid(g3)]
 
-  V3 = MatroidRank(ms, 5)
+  V3 = MatroidRank(ms, 6)
   
   @testset "Yankee Swap" begin
     A = alloc_yankee_swap_vz22(V1)

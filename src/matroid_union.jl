@@ -15,7 +15,8 @@ function exchange_graph(Ms::Vector{T}, A::Allocation) where T <: Matroid
   D = SimpleDiGraph(m)
   
   # Checking for each i,j whether element ei can be replaced with ej.
-  for gi in 1:m, gj in setdiff(1:m, gi) 
+  for gi in 1:m, gj in setdiff(1:m, gi)
+    if !owned(A, gi) continue end
     i = owner(A, gi)
 
     # Check if A_i - ei + ej is independent in Mi.
@@ -138,8 +139,8 @@ function matroid_partition_knuth73(Ms, floors=nothing)
       B = C
     end
 
-    # Remaining elements in A are not allocateable into independent sets.
-    return A
+    # We did not find a transfer path to 0.
+    return setdiff(A, reduce(∪, S))
   end
 
   function repaint(x)
@@ -165,6 +166,7 @@ function matroid_partition_knuth73(Ms, floors=nothing)
   while S0 != Set()
     X = augment(0)
     
+
     if length(X) != 0
       return (S, X)
     end

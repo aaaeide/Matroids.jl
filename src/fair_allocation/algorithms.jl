@@ -115,7 +115,7 @@ function alloc_algmms_bv21(V::MatroidRank)
   n = na(V); m = ni(V)
 
   # Compute a clean, (partial) MAX-USW allocation.
-  (partition, _junk) = matroid_partition_knuth73(V.Ms)
+  (partition, junk) = matroid_partition_knuth73(V.Ms)
   A = Allocation(n, m)
   for (i, bundle) in enumerate(partition)
     give!(A, i, bundle)
@@ -150,7 +150,19 @@ function alloc_algmms_bv21(V::MatroidRank)
   end
 
   # Give agent 1 any unallocated items (these are 0-valued by everyone).
-  junk = setdiff(1:m, reduce(∪, [bundle(A, j) for j in 1:n]))
   give!(A, 1, junk)
   return A
+end
+
+
+
+function alloc_algpmms_bv21(V::MatroidRank)
+  n = na(V); m = ni(V)
+
+  # Compute a clean, (partial) MAX-USW allocation.
+  (partition, _junk) = matroid_partition_knuth73(V.Ms)
+  A = Allocation(n, m)
+  for (i, bundle) in enumerate(partition)
+    give!(A, i, bundle)
+  end
 end

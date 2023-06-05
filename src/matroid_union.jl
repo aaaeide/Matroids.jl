@@ -128,8 +128,7 @@ function matroid_partition_knuth73(Ms, floors=nothing)
       for y ∈ B for x ∈ A
         j = color[y]
 
-        if is_indep(Ms[j], x ∪ setdiff(S[j], y))
-          println("repainting? $(x ∪ setdiff(S[j], y)) is indep in Ms[$j]")
+        if x ∉ S[j] && is_indep(Ms[j], x ∪ setdiff(S[j], y))
           succ[x] = y
           A = setdiff(A, x)
           C = C ∪ x
@@ -148,13 +147,9 @@ function matroid_partition_knuth73(Ms, floors=nothing)
       y = succ[x]
       j = color[x]
       
-      println("REPAINTING FROM $x ∈ $j -> $y ∈ $(color[y])")
-      println(S)
-      
       if j == 0 setdiff!(S0, x) else setdiff!(S[j], x) end
 
       j = color[y]
-      println("S[$j] = $(S[j]) receiving $x")
       S[j] = S[j] ∪ x
       color[x] = j
       x = y

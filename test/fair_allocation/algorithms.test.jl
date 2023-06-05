@@ -17,8 +17,6 @@ end
 
   V3 = MatroidRank(ms, 5)
   
-
-  
   @testset "Yankee Swap" begin
     A = alloc_yankee_swap_vz22(V1)
     for i in 1:n
@@ -57,12 +55,16 @@ end
   
   
   
-  # @testset "AlgMMS" begin
-  #   A = alloc_algmms_bv21(V1)
-  #   for i in 1:n
-  #     @test value(V1, i, A) == 1
-  #   end
+  @testset "AlgMMS" begin
+    A = alloc_algmms_bv21(V1)
+    for i in 1:n
+      @test value(V1, i, A) == 1
+    end
 
+    A = alloc_algmms_bv21(V2)
+    @test check_mms(V2, A)
     
-  # end
+    A = alloc_algmms_bv21(V3)
+    @test check_mms(V3, A)
+  end
 end

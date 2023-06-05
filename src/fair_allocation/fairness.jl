@@ -26,6 +26,17 @@ check_ef1(V::MatroidRank, A) = check_ef_(V, A, value_1)
 check_efx(V::MatroidRank, A) = check_ef_(V, A, value_x)
 check_efx0(V::MatroidRank, A) = check_ef_(V, A, value_x0)
 
+function check_mms(V, A)
+  mmss = [mms_i(V, i) for i in agents(V)]
+  for i in agents(V)
+    if value(V, i, A) < mmss[i]
+      return false
+    end
+  end
+
+  return true
+end
+
 ## ENVY-FREENESS ####################################################
 
 # Matroid rank functions are binary, so if the bundle value 

@@ -26,6 +26,6 @@ export matroid_partition_knuth73, matroid_partition
 export knuth_matroid, random_knuth_matroid, erect_v1
 
 export MatroidRank, na, ni, value
-export check_ef, check_ef1, check_efx, check_efx0, check_prop, check_prop1, check_propx, check_propx0, mms_i
+export check_ef, check_ef1, check_efx, check_efx0, check_prop, check_prop1, check_propx, check_propx0, mms_i, check_mms
 export alloc_yankee_swap_vz22, alloc_eit_bciz21, alloc_algmms_bv21
 end

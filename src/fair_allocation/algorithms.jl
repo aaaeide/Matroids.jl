@@ -156,13 +156,15 @@ end
 
 
 
-function alloc_algpmms_bv21(V::MatroidRank)
-  n = na(V); m = ni(V)
+# function alloc_algpmms_bv21(V::MatroidRank)
+#   n = na(V); m = ni(V)
 
-  # Compute a clean, (partial) MAX-USW allocation.
-  (partition, _junk) = matroid_partition_knuth73(V.Ms)
-  A = Allocation(n, m)
-  for (i, bundle) in enumerate(partition)
-    give!(A, i, bundle)
-  end
-end
+#   # Compute a clean, (partial) MAX-USW allocation.
+#   (partition, junk) = matroid_partition_knuth73(V.Ms)
+#   A = Allocation(n, m)
+#   for (i, bundle) in enumerate(partition)
+#     give!(A, i, bundle)
+#   end
+
+
+# end

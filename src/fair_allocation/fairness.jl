@@ -58,6 +58,16 @@ function check_mms(V, A)
   return true
 end
 
+function check_alpha_mms(V, A)
+  mmss = [mms_i(V, i) for i in agents(V)]
+  alphas = []
+  for i in agents(V)
+    push!(alphas, value(V, i, A) / mmss[i])
+  end
+
+  return minimum(alphas)
+end
+
 ## ENVY-FREENESS ####################################################
 
 function value_1(V::MatroidRank, i, A)

@@ -21,17 +21,24 @@ struct FullMatroid{T} <: Matroid
   Type::DataType
 end
 
-struct UniformMatroid <: Matroid
-  n::Integer
-  r::Integer
-end
-
 struct GraphicMatroid <: Matroid
   g::Graph
   n::Integer
   r::Integer
   GraphicMatroid(g::Graph) = new(g, ne(g), length(kruskal_mst(g)))
 end
+
+struct UniformMatroid <: Matroid
+  n::Integer
+  r::Integer
+end
+
+struct PartitionMatroid <: Matroid
+  n::Integer
+  categories::Vector{UnitRange{Integer}}
+  
+end
+
 
 FreeMatroid(n) = UniformMatroid(n, n)
 ZeroMatroid(n) = UniformMatroid(n, 0)

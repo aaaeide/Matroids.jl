@@ -44,11 +44,8 @@ end
 is_indep(M::FullMatroid, S) = is_indep(M, set_to_bits(S))
 
 
-function is_indep(M::UniformMatroid, S::Integer)
-  return Base.count_ones(S) <= M.r
-end
-
-is_indep(M::UniformMatroid, S) = is_indep(M, set_to_bits(S))
+is_indep(M::UniformMatroid, S) = length(S) <= M.r
+is_indep(M::UniformMatroid, S::Integer) = is_indep(M, bits_to_set(S))
 
 
 function is_indep(m::GraphicMatroid, S)
@@ -80,9 +77,9 @@ rank(M::Matroid) = M.r
 Rank ``oracle''. Returns the rank of the set S in the matroid M.
 """
 function rank(M::ClosedSetsMatroid, S::Integer)
-  for (r, Fr) in enumerate(M.F) for B ∈ Fr
+  for (r, Fr) in enumerate(M.F), B ∈ Fr
       if S&B == S return r-1 end
-  end end
+  end
 end
 rank(M::ClosedSetsMatroid, S) = rank(M, set_to_bits(S))
 
@@ -95,8 +92,8 @@ end
 rank(M::FullMatroid, S) = rank(M, set_to_bits(S))
 
 
-rank(M::UniformMatroid, S::Integer) = min(Base.count_ones(S), M.r)
-rank(M::UniformMatroid, S) = rank(M, set_to_bits(S))
+rank(M::UniformMatroid, S) = min(length(S), M.r)
+rank(M::UniformMatroid, S::Integer) = rank(M, bits_to_set(S))
 
 
 rank(M::GraphicMatroid, S) = length(S) > 0 ? length(minimal_spanning_subset(M, S)) : 0
@@ -285,8 +282,7 @@ end
 closure(M::FullMatroid, S) = closure(M, set_to_bits(S))
 
 closure(M::UniformMatroid, S::Integer) = closure(M, bits_to_set(S))
-closure(M::UniformMatroid, S) = 
-  length(S) <= M.r ? S : ground_set(M)
+closure(M::UniformMatroid, S) = length(S) < M.r ? S : ground_set(M)
 
 
 function closure(M::GraphicMatroid, S)

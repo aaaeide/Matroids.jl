@@ -94,7 +94,7 @@ end
   @test rank(F) == 10
   @test rank(Z) == 0
 
-  for i in 1:6
+  for i in 1:5
     S = randperm(10)[1:i]
     @test is_indep(U, S) || S
     @test is_indep(F, S) || S
@@ -112,6 +112,12 @@ end
     @test closure(F, S) == S || S
     @test closure(Z, S) == Set(1:10) || S
   end
+
+  S = randperm(10)[1:6]
+  @test is_indep(U, S) == true || S
+  @test is_circuit(U, S) == false|| S
+  @test rank(U, S) == 6 || S
+  @test closure(U, S) == Set(1:10) || S
 
   S = randperm(10)[1:7]
   @test is_indep(U, S) == false || S

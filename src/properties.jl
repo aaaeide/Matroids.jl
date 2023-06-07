@@ -267,9 +267,9 @@ function closure end
 
 
 function closure(M::ClosedSetsMatroid, S::Integer)
-  for Fr in M.F for B ∈ Fr
+  for Fr in M.F, B ∈ Fr
       if S&B == S return B end
-  end end
+  end
 end
 closure(M::ClosedSetsMatroid, S) = closure(M, set_to_bits(S))
 

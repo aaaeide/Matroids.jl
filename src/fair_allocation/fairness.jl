@@ -16,6 +16,27 @@ function check_thresh(V, A, thresh)
     return true
 end
 
+function check_alpha_ef_(V, A, value_)
+    N = agents(V)
+    alphas = []
+
+    for i in N, j in N
+        i !== j || continue
+        push!(alphas, value(V, i, A) / value_(V, i, bundle(A, j)))
+    end
+
+    return minimum(alphas)
+end
+
+function check_alpha_thresh(V, A, thresh)
+    alphas = []
+    for i in agents(V)
+        push!(alphas, value(V, i, A) / thresh(V, i, A))
+    end
+
+    return minimum(alphas)
+end
+
 check_prop(V::MatroidRank, A) = check_thresh(V, A, prop)
 check_prop1(V::MatroidRank, A) = check_thresh(V, A, prop_1)
 check_propx(V::MatroidRank, A) = check_thresh(V, A, prop_x)
@@ -39,9 +60,13 @@ end
 
 ## ENVY-FREENESS ####################################################
 
-# Matroid rank functions are binary, so if the bundle value 
-# is > 0, we know we can remove a 1-valued item from the bundle.
-value_1(V::MatroidRank, i, A) = max(value(V, i, A)-1, 0)
+function value_1(V::MatroidRank, i, A)
+  if is_indep(V.Ms[i], A)
+    return max(value(V, i, A)-1, 0)
+  end
+    
+  return minimum(value(V, i, setdiff(A, g)) for g in items(V))
+end
 
 # EFX and EF1 is equivalent (the least positively valued item has the same 
 # value as the highest valued item).

@@ -3,12 +3,30 @@ import Allocations: check_ef_, check_ef, check_ef1, check_efx
 
 ## CHECKS ###########################################################
 
+function m_check_ef_(V, A, value_; indep=false)
+  N = agents(V)
+
+  for i in N, j in N
+      i !== j || continue
+
+      val = indep ? length(bundle(A, i)) : value(V, i, A)
+
+      if val < value_(V, i, bundle(A, j))
+          return false
+      end
+  end
+
+  return true
+end
+
 # General check for threshold-bases fairness measures (PROP, PROP1, PROPX, MMS),
 # where each agent's bundle value should exceed some threshold. This threshold
 # is computed with the supplied function thresh.
-function check_thresh(V, A, thresh)
+function check_thresh(V, A, thresh; indep=false)
     for i in agents(V)
-        if value(V, i, A) < thresh(V, i, A)
+        val = indep ? length(bundle(A, i)) : value(V, i, A)
+
+        if val < thresh(V, i, A)
             return false
         end
     end
@@ -16,41 +34,64 @@ function check_thresh(V, A, thresh)
     return true
 end
 
-function check_alpha_ef_(V, A, value_)
+function check_alpha_ef_(V, A, value_; indep=false)
     N = agents(V)
     alphas = []
 
     for i in N, j in N
         i !== j || continue
-        push!(alphas, value(V, i, A) / value_(V, i, bundle(A, j)))
+
+        val = indep ? length(bundle(A, i)) : value(V, i, A)
+
+        push!(alphas, val / value_(V, i, bundle(A, j)))
     end
 
     return minimum(alphas)
 end
 
-function check_alpha_thresh(V, A, thresh)
+function check_alpha_thresh(V, A, thresh; indep=false)
     alphas = []
     for i in agents(V)
-        push!(alphas, value(V, i, A) / thresh(V, i, A))
+        val = indep ? length(bundle(A, i)) : value(V, i, A)
+
+        push!(alphas, val / thresh(V, i, A))
     end
 
     return minimum(alphas)
 end
 
-check_prop(V::MatroidRank, A) = check_thresh(V, A, prop)
-check_prop1(V::MatroidRank, A) = check_thresh(V, A, prop_1)
-check_propx(V::MatroidRank, A) = check_thresh(V, A, prop_x)
-check_propx0(V::MatroidRank, A) = check_thresh(V, A, prop_x0)
+check_prop(V::MatroidRank, A; indep=false) = 
+    check_thresh(V, A, prop; indep=indep)
+    
+check_prop1(V::MatroidRank, A; indep=false) = 
+    check_thresh(V, A, prop_1; indep=indep)
+    
+check_propx(V::MatroidRank, A; indep=false) = 
+    check_thresh(V, A, prop_x; indep=indep)
+    
+check_propx0(V::MatroidRank, A; indep=false) = 
+    check_thresh(V, A, prop_x0; indep=indep)
+    
 
-check_ef(V::MatroidRank, A) = check_ef_(V, A, value)
-check_ef1(V::MatroidRank, A) = check_ef_(V, A, value_1)
-check_efx(V::MatroidRank, A) = check_ef_(V, A, value_x)
-check_efx0(V::MatroidRank, A) = check_ef_(V, A, value_x0)
+check_ef(V::MatroidRank, A; indep=false) = 
+    m_check_ef_(V, A, value; indep=indep)
+    
+check_ef1(V::MatroidRank, A; indep=false) = 
+    m_check_ef_(V, A, value_1; indep=indep)
+    
+check_efx(V::MatroidRank, A; indep=false) = 
+    m_check_ef_(V, A, value_x; indep=indep)
+    
+check_efx0(V::MatroidRank, A; indep=false) = 
+    m_check_ef_(V, A, value_x0; indep=indep)
+    
 
-function check_mms(V, A)
+function check_mms(V, A; indep=false)
   mmss = [mms_i(V, i) for i in agents(V)]
   for i in agents(V)
-    if value(V, i, A) < mmss[i]
+    val = indep ? length(bundle(A, i)) : value(V, i, A)
+
+    if val < mmss[i]
       return false
     end
   end
@@ -58,11 +99,13 @@ function check_mms(V, A)
   return true
 end
 
-function check_alpha_mms(V, A)
+function check_alpha_mms(V, A; indep=false)
   mmss = [mms_i(V, i) for i in agents(V)]
   alphas = []
   for i in agents(V)
-    push!(alphas, value(V, i, A) / mmss[i])
+    val = indep ? length(bundle(A, i)) : value(V, i, A)
+
+    push!(alphas, val / mmss[i])
   end
 
   return minimum(alphas)
@@ -70,12 +113,12 @@ end
 
 ## ENVY-FREENESS ####################################################
 
-function value_1(V::MatroidRank, i, A)
-  if is_indep(V.Ms[i], A)
-    return max(value(V, i, A)-1, 0)
+function value_1(V::MatroidRank, i, S)
+  if is_indep(V.Ms[i], S)
+    return max(length(S)-1, 0)
   end
     
-  return minimum(value(V, i, setdiff(A, g)) for g in items(V))
+  return minimum(value(V, i, setdiff(S, g)) for g in items(V))
 end
 
 # EFX and EF1 is equivalent (the least positively valued item has the same 
@@ -83,8 +126,8 @@ end
 value_x(V::MatroidRank, i, A) = value_1(V, i, A)
 
 # If S is independent for M_i, the least valued good in S has value 1, else 0.
-value_x0(V::MatroidRank, i, A) =
-    is_indep(V.Ms[i], A) ? value_1(V, i, A) : value(V, i, A)
+value_x0(V::MatroidRank, i, S) =
+    is_indep(V.Ms[i], S) ? max(length(S)-1, 0) : value(V, i, S)
 
 
 ## THRESHOLDS #######################################################
@@ -103,7 +146,7 @@ prop(V::MatroidRank, i, _) = rank(V.Ms[i])/na(V)
 The proportional share of agent `i`, minus a highest-valued item not allocated
 to `i`.
 """
-prop_1(V::MatroidRank, i, A) = prop(V, i, A) - 1
+prop_1(V::MatroidRank, i, A) = max(prop(V, i, A) - 1, 0)
 
 """
     prop_x(V::Profile, i, S)
@@ -119,7 +162,7 @@ The proportional share of agent `i`, minus a least-valued (possibly 0-valued)
 item not allocated to `i`.
 """
 prop_x0(V::MatroidRank, i, A) = 
-    is_closed(V.Ms[i], A) ? prop_1(V, i, A) : prop(V, i, A)
+    is_closed(V.Ms[i], bundle(A, i)) ? prop_1(V, i, A) : prop(V, i, A)
 
 """
     function mms_i(V, i)
@@ -144,9 +187,16 @@ function mms_i(V::MatroidRank, i)
 
     # By the augmentation property, ∃g ∈ A_j st A_k + g ∈ I_i.
     g = nothing
-    for g´ ∈ setdiff(A[j], A[k]) if is_indep(M_i, A[k] ∪ g´)
+    for g´ ∈ A[j] if is_indep(M_i, A[k] ∪ g´)
       g = g´; break
     end end
+
+    if g === nothing
+      display(D)
+      display(A)
+      display(V.Ms[i])
+      throw("Did not find g ∈ A_$j st A_$k + g ∈ I_$i !")
+    end
 
     # Update A.
     setdiff!(A[j], g); union!(A[k], g)

@@ -18,6 +18,9 @@ end
   ms = [GraphicMatroid(g1), GraphicMatroid(g2), GraphicMatroid(g3)]
 
   V3 = MatroidRank(ms, 6)
+
+  V4 = gen_matroidrank_profile(8, () -> GraphicMatroid(random_er_graph(64)), GraphicMatroid)();
+  V5 = gen_matroidrank_profile(4, () -> random_knuth_matroid(13, [0,6,0]), ClosedSetsMatroid)()
   
   @testset "Yankee Swap" begin
     A = alloc_yankee_swap_vz22(V1)
@@ -26,14 +29,24 @@ end
     end
     
     A = alloc_yankee_swap_vz22(V2)
-    @test check_ef1(V2, A)
-    @test check_efx(V2, A)
-    @test check_efx0(V2, A)
+    @test check_ef1(V2, A; indep=true)
+    @test check_efx(V2, A; indep=true)
+    @test check_efx0(V2, A; indep=true)
 
     A = alloc_yankee_swap_vz22(V3)
-    @test check_ef1(V3, A)
-    @test check_efx(V3, A)
-    @test check_efx0(V3, A)
+    @test check_ef1(V3, A; indep=true)
+    @test check_efx(V3, A; indep=true)
+    @test check_efx0(V3, A; indep=true)
+
+    A = alloc_yankee_swap_vz22(V4)
+    for i in agents(V4)
+      @test is_indep(V4.Ms[i], bundle(A, i))
+    end
+
+    A = alloc_yankee_swap_vz22(V5)
+    for i in agents(V5)
+      @test is_indep(V5.Ms[i], bundle(A, i))
+    end
   end
   
 
@@ -45,14 +58,24 @@ end
     end
     
     A = alloc_eit_bciz21(V2)
-    @test check_ef1(V2, A)
-    @test check_efx(V2, A)
-    @test check_efx0(V2, A)
+    @test check_ef1(V2, A; indep=true)
+    @test check_efx(V2, A; indep=true)
+    @test check_efx0(V2, A; indep=true)
     
     A = alloc_eit_bciz21(V3)
-    @test check_ef1(V3, A)
-    @test check_efx(V3, A)
-    @test check_efx0(V3, A)
+    @test check_ef1(V3, A; indep=true)
+    @test check_efx(V3, A; indep=true)
+    @test check_efx0(V3, A; indep=true)
+
+    A = alloc_eit_bciz21(V4)
+    for i in agents(V4)
+      @test is_indep(V4.Ms[i], bundle(A, i))
+    end
+    
+    A = alloc_eit_bciz21(V5)
+    for i in agents(V5)
+      @test is_indep(V5.Ms[i], bundle(A, i))
+    end
   end
   
   
@@ -64,9 +87,19 @@ end
     end
 
     A = alloc_algmms_bv21(V2)
-    @test check_mms(V2, A)
+    @test check_mms(V2, A; indep=true)
     
     A = alloc_algmms_bv21(V3)
-    @test check_mms(V3, A)
+    @test check_mms(V3, A; indep=true)
+
+    A = alloc_algmms_bv21(V4)
+    for i in agents(V4)
+      @test is_indep(V4.Ms[i], bundle(A, i))
+    end
+    
+    A = alloc_algmms_bv21(V5)
+    for i in agents(V5)
+      @test is_indep(V5.Ms[i], bundle(A, i))
+    end
   end
 end

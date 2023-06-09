@@ -36,3 +36,41 @@ function Δ(V::MatroidRank, i::Integer, A::BitMatrix, g::Integer)
     Ai´ = copy(A[i, :]); Ai´[g] = 1
     return bv_rank(V.Ms[i], Ai´) - bv_rank(V.Ms[i], A[i, :])
 end
+
+
+"""
+Generate a MatroidRank valuation profile with n matroids over m elements. 
+"""
+function gen_matroidrank_profile(n, gen_matroid, T)
+  function gen()
+    ms = Array{T}(undef, n)
+
+    Threads.@threads for i in 1:n
+      ms[i] = gen_matroid()
+    end
+
+    return MatroidRank(ms, ms[1].n)
+  end
+
+  return gen
+end
+
+function random_er_graph(m)
+  n = rand(trunc(Integer, m/2):3m)
+  return erdos_renyi(n, m)
+end
+
+function random_ws_graph(m)
+  n = rand([x for x in 2:ceil(Integer, sqrt(2m)) if 2m%x == 0 && iseven(x)])
+  k = 2m ÷ n
+  (k, n) = sort([n,k])
+
+  return watts_strogatz(n, k, rand())
+end
+
+function random_ba_graph(m)
+  k = rand([x for x in 1:ceil(Integer, sqrt(m)) if m%x == 0])
+  n = m ÷ k + k
+
+  return barabasi_albert(n, k)
+end

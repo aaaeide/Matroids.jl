@@ -14,55 +14,114 @@ Fairness notions checked:
 
 Also: average time to compute and average bytes allocated.
 """
-function experiments(gen_profile, algo, n)
-  results = Dict("α-EF1" => [],
-                 "α-EFX_+" => [],
-                 "α-EFX_0" => [],
-                 "α-PROP" => [],
-                 "α-PROPX_+" => [],
-                #  "α-PROPX_0" => [],
-                 "α-MMS" => [],
-                 "time" => [],
-                 "bytes" => [])
+function experiments(profile_generators, algo, n)
+ 
+  for (name, gen_profile) in profile_generators
+    results = Dict{String, Union{Vector{Any}, Float64}}("α-EF1" => [],
+                   "α-EFX_+" => [],
+                   "α-EFX_0" => [],
+                   "α-PROP" => [],
+                   "α-PROPX_+" => [],
+                   "α-PROPX_0" => [],
+                   "α-MMS" => [],
+                   "time_alloc" => [],
+                   "bytes_alloc" => [],
+                   "time_gener" => [],
+                   "bytes_gener" => [])
 
-  println(" Time      | Bytes allocated | α-EF1 | α-EFX_+ | α-EFX_0 | α-PROP | α-PROPX_+ | α-PROPX_0 | α-MMS ")
-  println("-----------|-----------------|-------|---------|---------|--------|----------|-----------|-------")
+    println("\n\n$name")
+
+    for _ in 1:n
+      res_gener = @timed V = gen_profile()
+      res_alloc = @timed A = algo(V)
   
-  for _ in 1:n
-    V = gen_profile()
-    res = @timed A = algo(V)
+      push!(results["α-EF1"], 
+          check_alpha_ef_(V, A, value_1; indep=true))
 
-    push!(results["α-EF1"], check_alpha_ef_(V, A, value_1))
-    push!(results["α-EFX_+"], check_alpha_ef_(V, A, value_x))
-    push!(results["α-EFX_0"], check_alpha_ef_(V, A, value_x0))
-    push!(results["α-PROP"], check_alpha_thresh(V, A, prop))
-    push!(results["α-PROPX_+"], check_alpha_thresh(V, A, prop_x))
-    # push!(results["α-PROPX_0"], check_alpha_thresh(V, A, prop_x0))
-    push!(results["α-MMS"], check_alpha_mms(V, A))
-    push!(results["time"], res.time)
-    push!(results["bytes"], res.bytes)
+      push!(results["α-EFX_+"], 
+          check_alpha_ef_(V, A, value_x; indep=true))
 
-    for (k, v) in results println("$k\t\t$(v[end])") end
-    println("\n")
-  end
-end
+      push!(results["α-EFX_0"], 
+          check_alpha_ef_(V, A, value_x0; indep=true))
 
-"""
-Generate a MatroidRank valuation profile with n matroids over m elements. 
+      push!(results["α-PROP"], 
+          check_alpha_thresh(V, A, prop; indep=true))
 
-The matroids are generated using random_knuth_matroid(n,p,T).
-"""
-function gen_closedsets_matroidrank_profile(n, m, p, T)
-  function gen()
-    ms = Array{ClosedSetsMatroid}(undef, n)
+      push!(results["α-PROPX_+"], 
+          check_alpha_thresh(V, A, prop_x; indep=true))
 
-    Threads.@threads for i in 1:n
-      ms[i] = random_knuth_matroid(m, p, T)
+      push!(results["α-PROPX_0"], 
+          check_alpha_thresh(V, A, prop_x0; indep=true))
+
+      push!(results["α-MMS"], 
+          check_alpha_mms(V, A; indep=true))
+
+      push!(results["time_alloc"], res_alloc.time)
+      push!(results["bytes_alloc"], res_alloc.bytes)
+      
+      push!(results["time_gener"], res_gener.time)
+      push!(results["bytes_gener"], res_gener.bytes)
     end
+    
+    for (k,v) in results
+      results[k] = sum(v)/length(v)
+  
+      if k ∉ ["time_alloc", "time_gener"]
+        results[k] = trunc(results[k], digits=3)
+      end
+    end
+    
+    time_alloc = format_time(results["time_alloc"])
+    time_gener = format_time(results["time_gener"])
 
-    return MatroidRank(ms, m)
+    bytes_alloc = Base.format_bytes(results["bytes_alloc"])
+    bytes_gener = Base.format_bytes(results["bytes_gener"])
+        
+    println("Time (Gen.) | Bytes (Gen.) | Time (Alloc.) | Bytes (Alloc.) | α-EF1 | α-EFX_+ | α-EFX_0 | α-PROP | α-PROPX_+ | α-PROPX_0 | α-MMS ")
+    println("------------|--------------|---------------|----------------|-------|---------|---------|--------|-----------|-----------|-------")
+    println("$(rpad(time_gener, 11, " ")) | $(rpad(bytes_gener, 12, " ")) | $(rpad(time_alloc, 13, " ")) | $(rpad(bytes_alloc, 14, " ")) | $(rpad(results["α-EF1"], 5, " ")) | $(rpad(results["α-EFX_+"], 7, " ")) | $(rpad(results["α-EFX_0"], 7, " ")) | $(rpad(results["α-PROP"], 6, " ")) | $(rpad(results["α-PROPX_+"], 9, " ")) | $(rpad(results["α-PROPX_0"], 9, " ")) | $(results["α-MMS"])")
   end
-
-  return gen
 end
 
+function format_time(secs)
+  time = secs * 1e9
+  if time > 1e9
+    time = "$(round(time / 1e9, digits=3))s"
+  elseif time > 1e6
+    time = "$(round(time / 1e6, digits=3))ms"
+  elseif time > 1e3
+    time = "$(round(time / 1e3, digits=3))µs"
+  else
+    time = "$(round(time, digits=3))ns"
+  end
+
+  return time
+end
+
+
+profile_gens = [
+  ("8 x GraphicMatroid(random_er_graph(64))", 
+  gen_matroidrank_profile(8, 
+    () -> GraphicMatroid(random_er_graph(64)), 
+    GraphicMatroid)),
+  ("8 x GraphicMatroid(random_ws_graph(64))", 
+  gen_matroidrank_profile(8, 
+    () -> GraphicMatroid(random_ws_graph(64)), 
+    GraphicMatroid)),
+  ("8 x GraphicMatroid(random_ba_graph(64))", 
+  gen_matroidrank_profile(8, 
+    () -> GraphicMatroid(random_ba_graph(64)), 
+    GraphicMatroid)),
+  ("4 x random_knuth_matroid(13, [0,6,0])", 
+  gen_matroidrank_profile(4, 
+    () -> random_knuth_matroid(13, [0,6,0]), 
+    ClosedSetsMatroid)),
+  ("4 x random_knuth_matroid(16, [0,7,2])", 
+  gen_matroidrank_profile(4, 
+    () -> random_knuth_matroid(16, [0,7,2]), 
+    ClosedSetsMatroid)),
+  ("4 x random_knuth_matroid(19, [0,8,3,1])", 
+  gen_matroidrank_profile(4, 
+    () -> random_knuth_matroid(19, [0,8,3,1], UInt32), 
+    ClosedSetsMatroid)),
+]

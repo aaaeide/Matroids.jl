@@ -141,4 +141,7 @@ end
 
   @test rank(M) == 33
   @test rank(M, []) == 0
+  @test is_indep(M, [1,2,3])
+  @test is_indep(M, [1,2,16])
+  @test is_indep(M, [1,2,17]) == false
 end

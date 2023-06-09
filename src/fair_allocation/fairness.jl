@@ -133,15 +133,14 @@ function mms_i(V::MatroidRank, i)
   (A, _) = matroid_partition_knuth73([M_i for _ in 1:n])
 
   # Setup matrix D st D[j,k] v_i(A_j) - v_i(A_k) ∀ j,k ∈ [n].
-  D = zeros(Int8, n, n)
+  D = zeros(Integer, n, n)
   for j in 1:n for k in 1:n
     # v_i(A_p) = |A_p| since all sets in A are independent wrt M_i.
     D[j,k] = length(A[j]) - length(A[k])
   end end
 
-  jk = argmax(D)
-  while D[jk] > 1
-    j,k = Tuple(jk)
+  j,k = argmax(D) |> Tuple
+  while D[j,k] > 1
 
     # By the augmentation property, ∃g ∈ A_j st A_k + g ∈ I_i.
     g = nothing
@@ -158,7 +157,7 @@ function mms_i(V::MatroidRank, i)
       D[k, l] += 1; D[l, k] -= 1 # A_k is one larger.
     end
 
-    jk = argmax(D)
+    j,k = argmax(D) |> Tuple
   end
   
   return minimum(length, A)

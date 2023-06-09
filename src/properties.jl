@@ -49,9 +49,23 @@ is_indep(M::UniformMatroid, S::Integer) = is_indep(M, bits_to_set(S))
 
 
 function is_indep(m::GraphicMatroid, S)
-  edgelist = [e for (i, e) in enumerate(edges(m.g)) if i in S]
-  subgraph, _vmap = induced_subgraph(m.g, edgelist)
-  return !is_cyclic(subgraph)
+  if length(S) > m.r return false end
+
+  if length(edges(m.g)) == 0
+    return length(S) == 0
+  end
+  
+  seen = Set([])
+  for (i, e) in enumerate(edges(m.g))
+    if i ∉ S continue end
+    if src(e) in seen && dst(e) in seen || src(e) == dst(e)
+      return false
+    end
+
+    push!(seen, src(e))
+    push!(seen, dst(e))
+  end
+  return true
 end
 
 bv_is_indep(m::Matroid, bv::BitVector) = 
